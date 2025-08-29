@@ -1,0 +1,26 @@
+[package]
+name = "authoring-server"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.98"
+argon2 = { version = "0.5", features = ["std"] }
+axum = { version = "0.8.4", features = ["macros", "multipart"] }
+chrono = { version = "0.4.41", features = ["serde"] }
+diesel = { version = "2.2.11", features = ["chrono", "sqlite", "r2d2", "serde_json", "uuid"] }
+libsqlite3-sys = { version = "*", features = ["bundled"] }
+dotenvy = "0.15.7"
+jsonwebtoken = "9.3.1"
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.140"
+thiserror = "2.0.12"
+tokio = { version = "1.46.1", features = ["full"] }
+tower = "0.5.2"
+uuid = { version = "1.17.0", features = ["serde", "v7", "v8", "v4"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+axum-extra = { version = "0.10.1", features = ["typed-header"] }
+tower-http = { version = "0.6.6", features = ["full"] } #remember to remove this full feature
+reqwest = { version = "0.12.23", features = ["json"] }
+
