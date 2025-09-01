@@ -10,7 +10,7 @@ use axum::routing::post;
 use axum::{Json, extract::State};
 use std::sync::Arc;
 
-pub fn auth_routes(state: Arc<AppState>) -> Router {
+pub fn routes(state: Arc<AppState>) -> Router {
     Router::new().route("/auth", post(auth)).with_state(state)
 }
 

@@ -1,6 +1,12 @@
 use chrono::NaiveDateTime;
+use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct MessageDto {
+    pub message: String,
+}
 
 pub mod auth {
     use super::*;
@@ -65,7 +71,7 @@ pub mod topics {
         fn from(value: TopicDto) -> Self {
             Self {
                 id: value.id.into(),
-                subject_id: value.id.into(),
+                subject_id: value.subject_id.into(),
                 parent_topic_id: value.parent_topic_id.map(|pt| pt.into()),
                 name: value.name,
                 rubric: value.rubric,
@@ -115,6 +121,42 @@ pub mod tasks {
                 start_date: value.start_date,
                 due_date: value.due_date,
             }
+        }
+    }
+}
+
+pub mod topic {
+    use super::*;
+    #[derive(Queryable, Debug)]
+    pub struct FlatTopic {
+        pub topic_id: String,
+        pub topic_name: String,
+        pub parent_topic_id: Option<String>,
+        pub task_id: Option<String>,
+        pub num_of_questions: Option<i32>,
+    }
+
+    #[derive(Debug, Serialize, Deserialize, Clone)]
+    pub struct TopicNode {
+        pub id: String,
+        pub name: String,
+        pub num_of_questions: Option<i32>,
+        pub expected_total_count: i64,
+        pub task_id: Option<String>,
+        pub subtopics: Vec<TopicNode>,
+    }
+
+    impl TopicNode {
+        pub fn find_subtopics(&self, topic_id: &str) -> Option<Vec<TopicNode>> {
+            if self.id == topic_id {
+                return Some(self.subtopics.clone());
+            }
+            for sub in &self.subtopics {
+                if let Some(found) = sub.find_subtopics(topic_id) {
+                    return Some(found);
+                }
+            }
+            None
         }
     }
 }

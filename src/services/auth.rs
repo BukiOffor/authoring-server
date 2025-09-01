@@ -28,10 +28,21 @@ pub async fn authenticate_user(
         .map_err(|e| {
             ModuleError::InternalError(format!("Error fetching item from table: {}", e))
         })?;
-    if let Some(user) = user {
+    if let Some(mut user) = user {
         let is_password = crate::helpers::password_verfier(&payload.password, &user.password_hash);
         if !is_password {
             return Err(ModuleError::WrongCredentials);
+        }
+        if let Ok(auth) = try_login(payload.clone()).await {
+            user.bearer_token = auth.refresh_token;
+            // ❌❌❌ User object does not update
+            populate_table(
+                user.clone(),
+                &mut conn,
+                &reqwest::Client::new(),
+                auth.access_token,
+            )
+            .await?;
         }
         let id: Uuid = Uuid::parse_str(&user.id).map_err(|e| ModuleError::Error(e.to_string()))?;
         return Ok(JwtPayloadDto::new(id));
@@ -41,12 +52,11 @@ pub async fn authenticate_user(
             .map_err(|e| ModuleError::Error(e.to_string()))?;
 
         let client = reqwest::Client::new();
-        let response = client
-            .post(url)
-            .json(&payload)
-            .send()
-            .await
-            .map_err(|e| ModuleError::InternalError(e.to_string()))?;
+        let response = client.post(url).json(&payload).send().await.map_err(|_| {
+            ModuleError::InternalError(
+                "Upstream Server is not active yet, please contact Adminstrator".into(),
+            )
+        })?;
 
         if response.status().is_success() {
             let body = response
@@ -80,7 +90,7 @@ pub async fn authenticate_user(
             let id = dto.id.clone();
             let password = password_hasher(payload.password.clone())?;
             let user = User::from_dto(dto, password, auth_response.refresh_token);
-            populate_table(user,&mut conn, &client, auth_response.access_token.clone()).await?;
+            populate_table(user, &mut conn, &client, auth_response.access_token.clone()).await?;
 
             Ok(JwtPayloadDto::new(id))
         } else {
@@ -91,14 +101,8 @@ pub async fn authenticate_user(
     }
 }
 
-// get the topic and everything
-
-// get the topic details about the topic asignned
-
-// from the topic details, if the topic is a subtopic fetch its parent topic;
-
 pub async fn populate_table(
-    user:User,
+    user: User,
     conn: &mut DbConn,
     client: &Client,
     access_token: String,
@@ -118,7 +122,6 @@ pub async fn populate_table(
             "Something Went Wrong, please contact Adminstartor".into(),
         ));
     }
-    println!("broke here");
     let body = result
         .text()
         .await
@@ -127,28 +130,12 @@ pub async fn populate_table(
     let task: TaskMigrationDto =
         serde_json::from_str(&body).map_err(|e| ModuleError::InternalError(e.to_string()))?;
 
-    // for t in task.tasks {
-    //     let task = Tasks::from(t);
-    //     diesel::insert_into(schema::tasks::table)
-    //         .values(&task)
-    //         .on_conflict_do_nothing()
-    //         .execute(conn)
-    //         .map_err(|e| ModuleError::InternalError(e.to_string()))?;
-    // }
-    //  for t in task.topics {
-    //     let topic = Topic::from(t);
-    //     diesel::insert_into(schema::topics::table)
-    //         .values(&topic)
-    //         .on_conflict_do_nothing()
-    //         .execute(conn)
-    //         .map_err(|e| ModuleError::InternalError(e.to_string()))?;
-    // }
-
     conn.transaction::<_, ModuleError, _>(|conn| {
         diesel::insert_into(schema::user::table)
-                .values(user)
-                .execute(conn)
-                .map_err(|e| ModuleError::InternalError(e.to_string()))?;
+            .values(user)
+            .on_conflict_do_nothing()
+            .execute(conn)
+            .map_err(|e| ModuleError::InternalError(e.to_string()))?;
         for t in task.tasks {
             let task = Tasks::from(t);
             diesel::insert_into(schema::tasks::table)
@@ -168,4 +155,32 @@ pub async fn populate_table(
         Ok(())
     })?;
     Ok(())
+}
+
+async fn try_login(payload: AuthPayloadDto) -> Result<AuthBodyDto, ModuleError> {
+    let url = env::var("UPSTREAM_SERVER")
+        .map(|server| format!("{}/auth", server))
+        .map_err(|e| ModuleError::Error(e.to_string()))?;
+
+    let client = reqwest::Client::new();
+    let response = client
+        .post(url)
+        .json(&payload)
+        .send()
+        .await
+        .map_err(|e| ModuleError::InternalError(e.to_string()))?;
+
+    if response.status().is_success() {
+        let body = response
+            .text()
+            .await
+            .map_err(|e| ModuleError::Error(e.to_string()))?;
+        let auth_response: AuthBodyDto =
+            serde_json::from_str(&body).map_err(|e| ModuleError::InternalError(e.to_string()))?;
+        Ok(auth_response)
+    } else {
+        Err(ModuleError::InternalError(
+            "Upstream Server is Offline".into(),
+        ))
+    }
 }

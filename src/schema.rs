@@ -27,23 +27,15 @@ diesel::table! {
         subject_id -> Text,
         topic_id -> Text,
         question_type -> Text,
-        stem -> Text,
-        rubric -> Text,
+        text -> Text,
+        title -> Text,
         difficulty -> SmallInt,
         status -> Text,
-        created_by -> Text,
         created_at -> Timestamp,
         updated_at -> Timestamp,
         passage_id -> Nullable<Text>,
-        used -> Text,
-        reviewer_id_one -> Nullable<Text>,
-        reviewer_id_two -> Nullable<Text>,
-        mg_id -> Nullable<Text>,
-        mg_passage_id -> Nullable<Text>,
-        edit_level -> Text,
         taxonomy -> Text,
         task_id -> Text,
-        count -> BigInt,
     }
 }
 
@@ -56,8 +48,20 @@ diesel::table! {
         created_at -> Timestamp,
         updated_at -> Timestamp,
         subject_id -> Text,
-        mg_passage_id -> Nullable<Text>,
-        mg_id -> Nullable<Text>,
+    }
+}
+
+diesel::table! {
+    tasks (task_id, topic_id) {
+        task_id -> Text,
+        subject_id -> Text,
+        subject_name -> Text,
+        topic_id -> Text,
+        topic_name -> Text,
+        num_of_questions -> Integer,
+        subject_code -> Text,
+        start_date -> Timestamp,
+        due_date -> Timestamp,
     }
 }
 
@@ -94,18 +98,12 @@ diesel::table! {
     }
 }
 
-diesel::table! {
-    tasks(task_id,topic_id){
-    task_id -> Text,
-    subject_id -> Text,
-    subject_name -> Text,
-    topic_id -> Text,
-    topic_name -> Text,
-    num_of_questions -> Integer,
-    subject_code -> VarChar,
-    start_date -> Timestamp,
-    due_date -> Timestamp
-    }
-}
-
-diesel::allow_tables_to_appear_in_same_query!(activity_logs, item_options, items, passages, user,);
+diesel::allow_tables_to_appear_in_same_query!(
+    activity_logs,
+    item_options,
+    items,
+    passages,
+    tasks,
+    topics,
+    user,
+);

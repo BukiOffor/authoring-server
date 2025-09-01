@@ -55,14 +55,9 @@ where
 #[diesel(sql_type = Text)]
 pub enum ItemStatus {
     #[default]
+    Draft,
     Submitted,
-    ModeratedLevel1Review,
-    ModeratedLevel2Review,
-    Approved,
-    Rejected(String),
-    Archived,
-    Edited,
-    EditedWithDifficulty,
+    Ready,
 }
 
 impl<DB> FromSql<Text, DB> for ItemStatus
@@ -84,47 +79,6 @@ impl ToSql<Text, diesel::sqlite::Sqlite> for ItemStatus {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default, AsExpression, FromSqlRow)]
-#[diesel(sql_type = Text)]
-pub enum EditLevel {
-    Full,
-    Partial,
-    None,
-    #[default]
-    Unknown,
-}
-
-impl<DB> ToSql<Text, DB> for EditLevel
-where
-    DB: Backend,
-    str: ToSql<Text, DB>,
-{
-    fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, DB>) -> serialize::Result {
-        let s = match *self {
-            Self::Full => "Full",
-            Self::Partial => "Partial",
-            Self::None => "None",
-            Self::Unknown => "Unknown",
-        };
-        s.to_sql(out)
-    }
-}
-
-impl<DB> FromSql<Text, DB> for EditLevel
-where
-    DB: Backend,
-    String: FromSql<Text, DB>,
-{
-    fn from_sql(bytes: <DB as Backend>::RawValue<'_>) -> deserialize::Result<Self> {
-        match String::from_sql(bytes)?.as_str() {
-            "Full" => Ok(Self::Full),
-            "Partial" => Ok(Self::Partial),
-            "None" => Ok(Self::None),
-            "Unknown" => Ok(Self::Unknown),
-            s => Err(format!("Unknown edit level: {}", s).into()),
-        }
-    }
-}
 #[derive(
     Debug,
     Clone,
@@ -144,26 +98,16 @@ pub struct Items {
     pub subject_id: String,
     pub topic_id: String,
     pub question_type: ItemType,
-    pub stem: String, // text of question
-    pub rubric: String,
-    pub difficulty: i16, // 1-10 scale
+    pub text: String,
+    pub title: String,
+    pub difficulty: i16,
     pub status: ItemStatus,
-    pub created_by: String, // User.id of author
-    pub reviewer_id_one: Option<String>,
-    pub reviewer_id_two: Option<String>, // User.id of moderator
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
     pub passage_id: Option<String>,
-    pub used: Used,
-    pub edit_level: EditLevel,
-    pub mg_id: Option<String>,
-    pub mg_passage_id: Option<String>,
     pub taxonomy: Taxonomy,
     pub task_id: String,
-    pub count: i64,
 }
-
-//
 
 #[derive(
     Debug, Clone, Serialize, Deserialize, AsExpression, Default, FromSqlRow, PartialEq, Eq,
@@ -206,35 +150,6 @@ where
             "Analyzing" => Ok(Self::Analyzing),
             s => Err(format!("Unknown status: {}", s).into()),
         }
-    }
-}
-
-#[derive(
-    Debug, Clone, Serialize, Deserialize, AsExpression, Default, FromSqlRow, PartialEq, Eq,
-)]
-#[diesel(sql_type = Text)]
-pub enum Used {
-    Yes,
-    #[default]
-    No,
-}
-
-impl<DB> FromSql<Text, DB> for Used
-where
-    DB: Backend,
-    String: FromSql<Text, DB>,
-{
-    fn from_sql(bytes: <DB as Backend>::RawValue<'_>) -> deserialize::Result<Self> {
-        let s = String::from_sql(bytes)?;
-        serde_json::from_str(&s).map_err(Into::into)
-    }
-}
-
-impl ToSql<Text, diesel::sqlite::Sqlite> for Used {
-    fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, diesel::sqlite::Sqlite>) -> serialize::Result {
-        let s = serde_json::to_string(self)?;
-        out.set_value(s);
-        Ok(serialize::IsNull::No)
     }
 }
 
