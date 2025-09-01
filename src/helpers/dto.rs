@@ -1,5 +1,7 @@
+use crate::models::item::{ItemType, Taxonomy};
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
+use diesel::sql_types::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -8,6 +10,11 @@ pub struct MessageDto {
     pub message: String,
 }
 
+impl From<&str> for MessageDto {
+    fn from(value: &str) -> Self {
+        MessageDto { message: value.into() }
+    }
+}
 pub mod auth {
     use super::*;
 
@@ -157,6 +164,111 @@ pub mod topic {
                 }
             }
             None
+        }
+    }
+}
+
+pub mod items {
+
+    use crate::models::{item::Items, item_options::ItemOptions, passages::Passage};
+
+    use super::*;
+
+    #[derive(Debug, QueryableByName, Serialize, Deserialize)]
+    pub struct ItemStats {
+        #[diesel(sql_type = BigInt)]
+        pub total_items: i64,
+        #[diesel(sql_type = BigInt)]
+        pub total_drafts: i64,
+        #[diesel(sql_type = BigInt)]
+        pub total_ready: i64,
+        #[diesel(sql_type = BigInt)]
+        pub total_published: i64,
+    }
+
+    pub struct ItemWithOptions {
+        pub item: Items,
+        pub options: Vec<ItemOptions>,
+    }
+
+    impl ItemWithOptions {
+        pub fn from(item: Items, options: Vec<ItemOptions>) -> Self {
+            Self { item, options }
+        }
+    }
+
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    pub struct Options {
+        pub position: i32,
+        pub text: String,
+        pub is_correct: bool,
+    }
+
+    /// Represents a passage, it's questions and options.
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    pub struct PassageDto {
+        pub stem: String,
+        pub items: Vec<CreateItemDto>,
+        pub subject_id: Uuid,
+        pub topic_id: Uuid,
+    }
+
+    impl PassageDto {
+        pub fn build(&self) -> PassageWithItems {
+            let passage = self.build_passage();
+            let mut items: Vec<ItemWithOptions> = self
+                .items
+                .clone()
+                .into_iter()
+                .map(|item| item.into())
+                .collect();
+            for item in &mut items {
+                item.item.set_passage_id(passage.id.clone());
+            }
+            PassageWithItems { passage, items }
+        }
+
+        pub fn build_passage(&self) -> Passage {
+            Passage {
+                id: Uuid::now_v7().to_string(),
+                stem: self.stem.clone(),
+                topic_id: self.topic_id.to_string(),
+                subject_id: self.subject_id.to_string(),
+                created_at: chrono::Utc::now().naive_local(),
+                updated_at: chrono::Utc::now().naive_local(),
+            }
+        }
+    }
+
+    pub struct PassageWithItems {
+        pub passage: Passage,
+        pub items: Vec<ItemWithOptions>,
+    }
+
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    pub struct CreateItemDto {
+        pub question_type: ItemType,
+        pub subject_id: Uuid,
+        pub topic_id: Uuid,
+        pub title: String,
+        pub text: String,
+        pub difficulty: i16,
+        pub taxonomy: Taxonomy,
+        pub options: Vec<Options>,
+        pub passage_id: Option<Uuid>,
+        pub submit: Option<bool>,
+        pub task_id: Uuid,
+    }
+
+    impl From<CreateItemDto> for ItemWithOptions {
+        fn from(item: CreateItemDto) -> Self {
+            let options = item.options.clone();
+            let item = Items::from(item);
+            let options = options
+                .into_iter()
+                .map(|option| ItemOptions::from(option, item.id.clone()))
+                .collect();
+            ItemWithOptions::from(item, options)
         }
     }
 }

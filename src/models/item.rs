@@ -1,3 +1,4 @@
+use crate::helpers::dto::items::CreateItemDto;
 use crate::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
 use diesel::backend::Backend;
@@ -154,8 +155,37 @@ where
 }
 
 impl Items {
-    pub fn set_passage_id(&mut self, passage_id: Uuid) {
-        self.passage_id = Some(passage_id.to_string());
+    pub fn set_passage_id(&mut self, passage_id: String) {
+        self.passage_id = Some(passage_id);
         self.updated_at = chrono::Utc::now().naive_local();
+    }
+}
+
+impl From<CreateItemDto> for Items {
+    fn from(item: CreateItemDto) -> Self {
+        Self {
+            id: Uuid::now_v7().to_string(),
+            subject_id: item.subject_id.to_string(),
+            topic_id: item.topic_id.to_string(),
+            question_type: item.question_type,
+            text: item.text,
+            title: item.title,
+            difficulty: item.difficulty,
+            status: item
+                .submit
+                .map(|s| {
+                    if s {
+                        ItemStatus::Ready
+                    } else {
+                        ItemStatus::Draft
+                    }
+                })
+                .unwrap_or_default(),
+            created_at: chrono::Utc::now().naive_local(),
+            updated_at: chrono::Utc::now().naive_local(),
+            passage_id: item.passage_id.map(|p| p.to_string()),
+            taxonomy: item.taxonomy,
+            task_id: item.task_id.to_string(),
+        }
     }
 }

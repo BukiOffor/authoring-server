@@ -1,12 +1,15 @@
 use std::{collections::HashMap, sync::Arc};
 
-use crate::{DbPool, error::ModuleError, helpers::dto::topic::*};
-use chrono::Utc;
+use crate::{
+    DbPool,
+    error::ModuleError,
+    helpers::{self, dto::topic::*},
+};
+
 use diesel::prelude::*;
 
 pub fn fetch_subject_topics(
     subject_id: &str,
-    task_id: &str,
     pool: Arc<DbPool>,
 ) -> Result<Vec<TopicNode>, ModuleError> {
     use crate::schema::{tasks::dsl as tk, topics::dsl as t};
@@ -15,33 +18,32 @@ pub fn fetch_subject_topics(
         .get()
         .map_err(|e| ModuleError::InternalError(e.to_string()))?;
 
-    let now = Utc::now().naive_utc();
+    let active_task = helpers::get_current_user_task(&mut conn)?;
+    if let Some(task_id) = active_task {
+        let flat_topics = t::topics
+            .left_join(tk::tasks.on(tk::topic_id.eq(t::id).and(tk::subject_id.eq(t::subject_id))))
+            .filter(t::subject_id.eq(subject_id))
+            .filter(tk::task_id.eq(task_id))
+            .select((
+                t::id,
+                t::name,
+                t::parent_topic_id,
+                tk::task_id.nullable(),
+                tk::num_of_questions.nullable(),
+            ))
+            .load::<FlatTopic>(&mut conn)?;
+        return Ok(build_hierarchy(flat_topics));
+    }
 
-    let flat_topics = t::topics
-        .left_join(tk::tasks.on(tk::topic_id.eq(t::id).and(tk::subject_id.eq(t::subject_id))))
-        .filter(t::subject_id.eq(subject_id))
-        .filter(tk::task_id.eq(task_id))
-        .filter(tk::start_date.le(now))
-        .filter(tk::due_date.ge(now))
-        .select((
-            t::id,
-            t::name,
-            t::parent_topic_id,
-            tk::task_id.nullable(),
-            tk::num_of_questions.nullable(),
-        ))
-        .load::<FlatTopic>(&mut conn)?;
-    let tree = build_hierarchy(flat_topics);
-    Ok(tree)
+    Ok(vec![])
 }
 
 pub fn fetch_subtopics_under_topic(
     subject_id: &str,
-    task_id: &str,
     topic_id: &str,
     pool: Arc<DbPool>,
 ) -> Result<Vec<TopicNode>, ModuleError> {
-    let tree = fetch_subject_topics(subject_id, task_id, pool)?;
+    let tree = fetch_subject_topics(subject_id, pool)?;
     if let Some(subs) = tree.iter().find_map(|t| t.find_subtopics(topic_id)) {
         return Ok(subs);
     }

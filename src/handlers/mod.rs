@@ -1,4 +1,5 @@
 pub mod auth;
+pub mod items;
 pub mod topics;
 
 use crate::AppState;
@@ -9,5 +10,6 @@ pub fn get_routes(state: Arc<AppState>) -> Router {
     Router::new()
         .with_state(Arc::clone(&state))
         .merge(crate::handlers::auth::routes(state.clone()))
-        .merge(crate::handlers::topics::routes(state))
+        .merge(crate::handlers::topics::routes(state.clone()))
+        .merge(crate::handlers::items::routes(state.clone()))
 }
