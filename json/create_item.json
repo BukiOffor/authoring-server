@@ -1,0 +1,32 @@
+{
+    "question_type": "MultipleChoice",
+    "subject_id": "0197ff8f-df8b-7a22-8ff6-7f79f47e4849",
+    "topic_id": "01983279-d377-71d3-9ee7-271adda0b8ff",
+    "task_id": "0198a8bf-ce93-7342-b358-0fb7f53325fc",
+    "title": "Passive and Present",
+    "text": "What is the main purpose of a persuasive essay?",
+    "taxonomy": "Understanding",
+    "difficulty": 2,
+    "options": [
+        {
+            "position": 1,
+            "text": "To inform the reader",
+            "is_correct": false
+        },
+        {
+            "position": 2,
+            "text": "To entertain the reader",
+            "is_correct": false
+        },
+        {
+            "position": 3,
+            "text": "To describe a scence",
+            "is_correct": false
+        },
+        {
+            "position": 4,
+            "text": "To convince the reader of a perspective",
+            "is_correct": true
+        }
+    ]
+}

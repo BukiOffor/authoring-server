@@ -27,8 +27,6 @@ diesel::table! {
         subject_id -> Text,
         topic_id -> Text,
         question_type -> Text,
-        text -> Text,
-        title -> Text,
         difficulty -> SmallInt,
         status -> Text,
         created_at -> Timestamp,
@@ -36,6 +34,8 @@ diesel::table! {
         passage_id -> Nullable<Text>,
         taxonomy -> Text,
         task_id -> Text,
+        text -> Text,
+        title -> Text,
     }
 }
 
@@ -44,7 +44,6 @@ diesel::table! {
         id -> Text,
         stem -> Text,
         topic_id -> Text,
-        created_by -> Text,
         created_at -> Timestamp,
         updated_at -> Timestamp,
         subject_id -> Text,

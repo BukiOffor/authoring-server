@@ -1,10 +1,17 @@
-use axum::{Json, RequestPartsExt, extract::FromRequestParts, http::request::Parts};
+use axum::{
+    Json, RequestPartsExt,
+    extract::{FromRequestParts, Request},
+    http::request::Parts,
+    middleware::Next,
+    response::Response,
+};
 use axum_extra::{
     TypedHeader,
     headers::{Authorization, authorization::Bearer},
 };
 use chrono::Utc;
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
+use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use std::sync::LazyLock;
 use uuid::Uuid;
@@ -85,4 +92,12 @@ impl Keys {
             decoding: DecodingKey::from_secret(secret),
         }
     }
+}
+
+pub async fn auth_middleware(
+    Claims { .. }: Claims,
+    req: Request,
+    next: Next,
+) -> Result<Response, StatusCode> {
+    Ok(next.run(req).await)
 }

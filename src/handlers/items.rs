@@ -1,6 +1,8 @@
+use crate::helpers::dto::items::display::TopicItemsDto;
 use crate::helpers::dto::MessageDto;
 use crate::helpers::dto::items::*;
-use crate::{AppState, error::ModuleError};
+use crate::{AppState, error::ModuleError, services};
+use axum::routing::delete;
 use axum::routing::post;
 use axum::{Json, extract::State};
 use axum::{Router, extract::Path, routing::get};
@@ -17,6 +19,8 @@ pub fn get_routes(state: Arc<AppState>) -> Router {
         .route("/stats/{subject_id}", get(fetch_item_stats))
         .route("/create/single", post(create_item))
         .route("/create/passage", post(create_passage_and_items))
+        .route("/get/{topic_id}/{task_id}", get(fetch_items_under_topic))
+        .route("/delete/{item_id}", delete(delete_item))
         .with_state(state)
 }
 
@@ -44,5 +48,25 @@ pub async fn create_passage_and_items(
 ) -> Result<Json<MessageDto>, ModuleError> {
     let response =
         crate::services::items::create_passage_and_items(state.pool.clone(), payload.build())?;
+    Ok(Json(response))
+}
+
+pub async fn delete_item(
+    State(state): State<Arc<AppState>>,
+    Path(item_id): Path<String>,
+) -> Result<Json<MessageDto>, ModuleError> {
+    let response = services::items::delete_item(item_id, state.pool.clone())?;
+    Ok(Json(response))
+}
+
+pub async fn fetch_items_under_topic(
+    State(state): State<Arc<AppState>>,
+    Path((topic_id, task_id)): Path<(String, String)>,
+) -> Result<Json<TopicItemsDto>, ModuleError> {
+    let response = services::items::fetch_topic_items_with_subtopics(
+        &topic_id,
+        &task_id,
+        state.pool.clone(),
+    )?;
     Ok(Json(response))
 }

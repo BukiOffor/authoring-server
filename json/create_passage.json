@@ -1,0 +1,199 @@
+{
+    "stem": "Marie Curie was a pioneering physicist and chemist who conducted groundbreaking research on radioactivity. Born in Poland in 1867, she moved to France to continue her education and scientific work. Alongside her husband Pierre Curie, she discovered two radioactive elements: polonium and radium. Marie Curie was the first woman to win a Nobel Prize and remains the only person to have won Nobel Prizes in two different scientific fields—Physics and Chemistry. Her work laid the foundation for modern nuclear science and medicine.",
+    "subject_id": "0197ff8f-df8b-7a22-8ff6-7f79f47e4849",
+    "topic_id": "01983279-d377-71d3-9ee7-271adda0b8ff",
+    "items": [
+        {
+            "question_type": "Passage",
+            "subject_id": "0197ff8f-df8b-7a22-8ff6-7f79f47e4849",
+            "topic_id": "01983279-d377-71d3-9ee7-271adda0b8ff",
+            "task_id": "0198a8bf-ce93-7342-b358-0fb7f53325fc",
+            "taxonomy": "Understanding",
+            "title": "English Passage",
+            "text": "Where was Marie Curie born?",
+            "difficulty": 1,
+            "options": [
+                {
+                    "position": 1,
+                    "text": "Poland",
+                    "is_correct": true
+                },
+                {
+                    "position": 2,
+                    "text": "Russia",
+                    "is_correct": false
+                },
+                {
+                    "position": 3,
+                    "text": "Germany",
+                    "is_correct": false
+                },
+                {
+                    "position": 4,
+                    "text": "France",
+                    "is_correct": false
+                }
+            ]
+        },
+        {
+            "question_type": "Passage",
+            "subject_id": "0197ff8f-df8b-7a22-8ff6-7f79f47e4849",
+            "topic_id": "01983279-d377-71d3-9ee7-271adda0b8ff",
+            "task_id": "0198a8bf-ce93-7342-b358-0fb7f53325fc",
+            "taxonomy": "Understanding",
+            "title": "English Passage",
+            "text": "What scientific field did Marie Curie help to pioneer?",
+            "difficulty": 3,
+            "options": [
+                {
+                    "position": 1,
+                    "text": "Astronomy",
+                    "is_correct": false
+                },
+                {
+                    "position": 2,
+                    "text": "Botany",
+                    "is_correct": false
+                },
+                {
+                    "position": 3,
+                    "text": "Radioactivity",
+                    "is_correct": false
+                },
+                {
+                    "position": 4,
+                    "text": "Genetics",
+                    "is_correct": true
+                }
+            ]
+        },
+        {
+            "question_type": "Passage",
+            "subject_id": "0197ff8f-df8b-7a22-8ff6-7f79f47e4849",
+            "topic_id": "01983279-d377-71d3-9ee7-271adda0b8ff",
+            "task_id": "0198a8bf-ce93-7342-b358-0fb7f53325fc",
+            "taxonomy": "Understanding",
+            "title": "English Passage",
+            "text": "What element did Marie Curie name after her homeland?",
+            "difficulty": 7,
+            "options": [
+                {
+                    "position": 1,
+                    "text": "Radium",
+                    "is_correct": false
+                },
+                {
+                    "position": 2,
+                    "text": "Curium",
+                    "is_correct": false
+                },
+                {
+                    "position": 3,
+                    "text": "Polonium",
+                    "is_correct": true
+                },
+                {
+                    "position": 4,
+                    "text": "Francium",
+                    "is_correct": false
+                }
+            ]
+        },
+        {
+            "question_type": "Passage",
+            "subject_id": "0197ff8f-df8b-7a22-8ff6-7f79f47e4849",
+            "topic_id": "01983279-d377-71d3-9ee7-271adda0b8ff",
+            "task_id": "0198a8bf-ce93-7342-b358-0fb7f53325fc",
+            "taxonomy": "Understanding",
+            "title": "English Passage",
+            "text": "Which scientific fields did Marie Curie win Nobel Prizes in?",
+            "difficulty": 1,
+            "options": [
+                {
+                    "position": 1,
+                    "text": "Physics and Biology",
+                    "is_correct": false
+                },
+                {
+                    "position": 2,
+                    "text": "Chemistry and Medicine",
+                    "is_correct": false
+                },
+                {
+                    "position": 3,
+                    "text": "Physics and Chemistry",
+                    "is_correct": true
+                },
+                {
+                    "position": 4,
+                    "text": "Literature and Peace",
+                    "is_correct": false
+                }
+            ]
+        },
+        {
+            "question_type": "Passage",
+            "subject_id": "0197ff8f-df8b-7a22-8ff6-7f79f47e4849",
+            "topic_id": "01983279-d377-71d3-9ee7-271adda0b8ff",
+            "task_id": "0198a8bf-ce93-7342-b358-0fb7f53325fc",
+            "taxonomy": "Understanding",
+            "title": "English Passage",
+            "text": "Who was Marie Curie’s research partner and husband?",
+            "difficulty": 3,
+            "options": [
+                {
+                    "position": 1,
+                    "text": "Albert Einstein",
+                    "is_correct": false
+                },
+                {
+                    "position": 2,
+                    "text": "Pierre Curie",
+                    "is_correct": true
+                },
+                {
+                    "position": 3,
+                    "text": "Louis Pasteur",
+                    "is_correct": false
+                },
+                {
+                    "position": 4,
+                    "text": "Isaac Newton",
+                    "is_correct": false
+                }
+            ]
+        },
+        {
+            "question_type": "Passage",
+            "subject_id": "0197ff8f-df8b-7a22-8ff6-7f79f47e4849",
+            "topic_id": "01983279-d377-71d3-9ee7-271adda0b8ff",
+            "task_id": "0198a8bf-ce93-7342-b358-0fb7f53325fc",
+            "taxonomy": "Analyzing",
+            "title": "English Passage",
+            "text": "What was the impact of Marie Curie’s discoveries?",
+            "difficulty": 4,
+            "options": [
+                {
+                    "position": 1,
+                    "text": "Improved agricultural techniques",
+                    "is_correct": false
+                },
+                {
+                    "position": 2,
+                    "text": "Foundation for nuclear science and medicine",
+                    "is_correct": true
+                },
+                {
+                    "position": 3,
+                    "text": "Invention of the telephone",
+                    "is_correct": false
+                },
+                {
+                    "position": 4,
+                    "text": "Development of the steam engine",
+                    "is_correct": false
+                }
+            ]
+        }
+    ]
+}

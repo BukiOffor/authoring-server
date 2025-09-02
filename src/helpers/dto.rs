@@ -12,7 +12,9 @@ pub struct MessageDto {
 
 impl From<&str> for MessageDto {
     fn from(value: &str) -> Self {
-        MessageDto { message: value.into() }
+        MessageDto {
+            message: value.into(),
+        }
     }
 }
 pub mod auth {
@@ -269,6 +271,73 @@ pub mod items {
                 .map(|option| ItemOptions::from(option, item.id.clone()))
                 .collect();
             ItemWithOptions::from(item, options)
+        }
+    }
+
+    pub struct ViewItems {
+        pub topic_id: String,
+        pub subject_id: String,
+    }
+
+    pub struct Item {
+        pub topic_id: String,
+        pub topic_name: String,
+        pub title: String,
+        pub text: String,
+        pub difficulty: i16,
+        pub taxonomy: Taxonomy,
+        pub passage_id: Option<Uuid>,
+        pub task_id: Uuid,
+        pub options: Vec<Options>,
+    }
+
+    pub mod display {
+        use super::*;
+        #[derive(Debug, Serialize, Clone)]
+        pub struct OptionDto {
+            pub id: String,
+            pub label: String,
+            pub value: i64,
+            pub is_answer: bool,
+        }
+
+        #[derive(Debug, Serialize, Clone)]
+
+        pub struct ItemDto {
+            pub id: String,
+            pub title: String,
+            pub text: String,
+            pub question_type: String,
+            pub difficulty: i16,
+            pub status: String,
+            pub options: Vec<OptionDto>,
+        }
+        #[derive(Debug, Serialize, Clone)]
+
+        pub struct PassageViewDto {
+            pub stem: String,
+            pub items: Vec<ItemDto>,
+        }
+        #[derive(Debug, Serialize, Clone)]
+
+        pub struct ItemsAndPassages {
+            pub passages: Vec<PassageViewDto>,
+            pub items: Vec<ItemDto>,
+        }
+        #[derive(Debug, Serialize, Clone)]
+
+        pub struct SubtopicDto {
+            pub id: String,
+            pub name: String,
+            pub items: Vec<ItemsAndPassages>,
+        }
+        #[derive(Debug, Serialize, Clone)]
+
+        pub struct TopicItemsDto {
+            pub topic_id: String,
+            pub task_id: String,
+            pub items: ItemsAndPassages,
+            pub subtopics: Vec<SubtopicDto>,
         }
     }
 }
