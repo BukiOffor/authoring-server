@@ -1,7 +1,7 @@
 use diesel::{prelude::*, sql_types::Text};
 use std::collections::HashMap;
 use std::sync::Arc;
-
+use crate::models::item::ItemStatus;
 use crate::{
     error::ModuleError, helpers::{
         self,
@@ -31,13 +31,13 @@ pub fn create_item(
     })
 }
 
-pub fn update_item_status(item_id: String, pool: Arc<DbPool>) -> Result<MessageDto, ModuleError>  {
+pub fn update_item_status(item_id: String, status: ItemStatus, pool: Arc<DbPool>) -> Result<MessageDto, ModuleError>  {
     let mut conn = pool
     .get()
     .map_err(|e| ModuleError::InternalError(e.to_string()))?;
     diesel::update(items::table.filter(items::id.eq(item_id.clone())))
             .set((
-                items::status.eq(crate::models::item::ItemStatus::Ready), 
+                items::status.eq(status), 
                 items::updated_at.eq(chrono::Local::now().naive_local()),
             ))
             .execute(&mut conn)
@@ -46,13 +46,14 @@ pub fn update_item_status(item_id: String, pool: Arc<DbPool>) -> Result<MessageD
 }
 
 
-pub fn update_item(item_id: String, dto: EditItemDto, pool: Arc<DbPool>) -> Result<MessageDto, ModuleError>  {
+pub fn update_item(item_id: String, dto: EditItemDto, pool: Arc<DbPool>, publish: bool) -> Result<MessageDto, ModuleError>  {
     let mut conn = pool
         .get()
         .map_err(|e| ModuleError::InternalError(e.to_string()))?;
 
     conn.transaction::<_, ModuleError, _>(|conn: &mut diesel::r2d2::PooledConnection<diesel::r2d2::ConnectionManager<SqliteConnection>>| {
-        
+        let status = if publish { ItemStatus::Ready } else {ItemStatus::Draft};
+
         let item = dto.item;
         let options = dto.options;
         diesel::update(items::table.filter(items::id.eq(item_id.clone())))
@@ -61,6 +62,7 @@ pub fn update_item(item_id: String, dto: EditItemDto, pool: Arc<DbPool>) -> Resu
                 items::text.eq(item.text),
                 items::difficulty.eq(item.difficulty),
                 items::taxonomy.eq(item.taxonomy),
+                items::status.eq(status),
                 items::updated_at.eq(chrono::Local::now().naive_local()),
             ))
             .execute(conn)

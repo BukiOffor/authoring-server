@@ -305,6 +305,7 @@ pub mod items {
     pub struct EditItemDto {
         pub item: EditItem,
         pub options: Vec<OptionDto>,
+        pub publish: bool,
     }
 
     pub mod display {

@@ -1,6 +1,7 @@
 use crate::helpers::dto::items::display::TopicItemsDto;
 use crate::helpers::dto::MessageDto;
 use crate::helpers::dto::items::*;
+use crate::models::item::ItemStatus;
 use crate::{AppState, error::ModuleError, services};
 use axum::routing::delete;
 use axum::routing::patch;
@@ -79,15 +80,17 @@ pub async fn update_item(
     Path(item_id): Path<String>,
     Json(dto): Json<EditItemDto>,
 ) -> Result<Json<MessageDto>, ModuleError> {
-    let response = services::items::update_item(item_id, dto, state.pool.clone())?;
+    let publish = dto.publish.clone();
+    let response = services::items::update_item(item_id, dto, state.pool.clone(), publish)?;
     Ok(Json(response))
 }
 
 pub async fn update_item_status(
     State(state): State<Arc<AppState>>,
     Path(item_id): Path<String>,
+    Json(status): Json<ItemStatus>,
 ) -> Result<Json<MessageDto>, ModuleError> {
-    let response = services::items::update_item_status(item_id, state.pool.clone())?;
+    let response = services::items::update_item_status(item_id, status, state.pool.clone())?;
     Ok(Json(response))
 }
 
