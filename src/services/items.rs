@@ -1,15 +1,21 @@
+use crate::models::item::ItemStatus;
+use crate::{
+    DbPool,
+    error::ModuleError,
+    helpers::{
+        self,
+        dto::{
+            MessageDto,
+            items::{EditItemDto, ItemStats, PassageWithItems, display::*},
+        },
+    },
+    insert,
+    models::{item::Items, item_options::ItemOptions, passages::Passage},
+    schema::{item_options, items, passages, topics},
+};
 use diesel::{prelude::*, sql_types::Text};
 use std::collections::HashMap;
 use std::sync::Arc;
-use crate::models::item::ItemStatus;
-use crate::{
-    error::ModuleError, helpers::{
-        self,
-        dto::{
-            items::{display::*, EditItemDto, ItemStats, PassageWithItems}, MessageDto
-        },
-    }, insert, models::{item::Items, item_options::ItemOptions, passages::Passage}, schema::{item_options, items, passages, topics}, DbPool
-};
 
 pub fn create_item(
     pool: Arc<DbPool>,
@@ -31,58 +37,73 @@ pub fn create_item(
     })
 }
 
-pub fn update_item_status(item_id: String, status: ItemStatus, pool: Arc<DbPool>) -> Result<MessageDto, ModuleError>  {
+pub fn update_item_status(
+    item_id: String,
+    status: ItemStatus,
+    pool: Arc<DbPool>,
+) -> Result<MessageDto, ModuleError> {
     let mut conn = pool
-    .get()
-    .map_err(|e| ModuleError::InternalError(e.to_string()))?;
+        .get()
+        .map_err(|e| ModuleError::InternalError(e.to_string()))?;
     diesel::update(items::table.filter(items::id.eq(item_id.clone())))
-            .set((
-                items::status.eq(status), 
-                items::updated_at.eq(chrono::Local::now().naive_local()),
-            ))
-            .execute(&mut conn)
-            .map_err(|e| ModuleError::InternalError(e.to_string()))?;
+        .set((
+            items::status.eq(status),
+            items::updated_at.eq(chrono::Local::now().naive_local()),
+        ))
+        .execute(&mut conn)
+        .map_err(|e| ModuleError::InternalError(e.to_string()))?;
     Ok("Item has been updated successfully".into())
 }
 
-
-pub fn update_item(item_id: String, dto: EditItemDto, pool: Arc<DbPool>, publish: bool) -> Result<MessageDto, ModuleError>  {
+pub fn update_item(
+    item_id: String,
+    dto: EditItemDto,
+    pool: Arc<DbPool>,
+    publish: bool,
+) -> Result<MessageDto, ModuleError> {
     let mut conn = pool
         .get()
         .map_err(|e| ModuleError::InternalError(e.to_string()))?;
 
-    conn.transaction::<_, ModuleError, _>(|conn: &mut diesel::r2d2::PooledConnection<diesel::r2d2::ConnectionManager<SqliteConnection>>| {
-        let status = if publish { ItemStatus::Ready } else {ItemStatus::Draft};
+    conn.transaction::<_, ModuleError, _>(
+        |conn: &mut diesel::r2d2::PooledConnection<
+            diesel::r2d2::ConnectionManager<SqliteConnection>,
+        >| {
+            let status = if publish {
+                ItemStatus::Ready
+            } else {
+                ItemStatus::Draft
+            };
 
-        let item = dto.item;
-        let options = dto.options;
-        diesel::update(items::table.filter(items::id.eq(item_id.clone())))
-            .set((
-                items::title.eq(item.title),
-                items::text.eq(item.text),
-                items::difficulty.eq(item.difficulty),
-                items::taxonomy.eq(item.taxonomy),
-                items::status.eq(status),
-                items::updated_at.eq(chrono::Local::now().naive_local()),
-            ))
-            .execute(conn)
-            .map_err(|e| ModuleError::InternalError(e.to_string()))?;
-
-        for option in options {
-            diesel::update(item_options::table.filter(item_options::id.eq(option.id)))
+            let item = dto.item;
+            let options = dto.options;
+            diesel::update(items::table.filter(items::id.eq(item_id.clone())))
                 .set((
-                    item_options::label.eq(option.label),
-                    item_options::value.eq(option.value),
-                    item_options::is_answer.eq(option.is_answer),
+                    items::title.eq(item.title),
+                    items::text.eq(item.text),
+                    items::difficulty.eq(item.difficulty),
+                    items::taxonomy.eq(item.taxonomy),
+                    items::status.eq(status),
+                    items::updated_at.eq(chrono::Local::now().naive_local()),
                 ))
                 .execute(conn)
                 .map_err(|e| ModuleError::InternalError(e.to_string()))?;
-        }  
-        Ok(())
-    })?;
+
+            for option in options {
+                diesel::update(item_options::table.filter(item_options::id.eq(option.id)))
+                    .set((
+                        item_options::label.eq(option.label),
+                        item_options::value.eq(option.value),
+                        item_options::is_answer.eq(option.is_answer),
+                    ))
+                    .execute(conn)
+                    .map_err(|e| ModuleError::InternalError(e.to_string()))?;
+            }
+            Ok(())
+        },
+    )?;
     Ok("Item has been updated successfully".into())
 }
-
 
 pub fn create_passage_and_items(
     pool: Arc<DbPool>,
@@ -143,12 +164,12 @@ pub fn delete_item(item_id: String, pool: Arc<DbPool>) -> Result<MessageDto, Mod
         .map_err(|e| ModuleError::InternalError(e.to_string()))?;
     conn.transaction::<_, ModuleError, _>(|conn| {
         diesel::delete(items::table.filter(items::id.eq(item_id.clone()))).execute(conn)?;
-        diesel::delete(item_options::table.filter(item_options::item_id.eq(item_id))).execute(conn)?;
+        diesel::delete(item_options::table.filter(item_options::item_id.eq(item_id)))
+            .execute(conn)?;
         Ok(())
     })?;
     Ok("Item has been deleted successfully".into())
 }
-
 
 pub fn fetch_topic_items_with_subtopics(
     parent_topic_id: &str,
@@ -310,6 +331,3 @@ pub fn fetch_topic_items_with_subtopics(
         subtopics: subtopics_dto,
     })
 }
-
-
-

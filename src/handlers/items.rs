@@ -1,5 +1,5 @@
-use crate::helpers::dto::items::display::TopicItemsDto;
 use crate::helpers::dto::MessageDto;
+use crate::helpers::dto::items::display::TopicItemsDto;
 use crate::helpers::dto::items::*;
 use crate::models::item::ItemStatus;
 use crate::{AppState, error::ModuleError, services};
@@ -67,11 +67,8 @@ pub async fn fetch_items_under_topic(
     State(state): State<Arc<AppState>>,
     Path((topic_id, task_id)): Path<(String, String)>,
 ) -> Result<Json<TopicItemsDto>, ModuleError> {
-    let response = services::items::fetch_topic_items_with_subtopics(
-        &topic_id,
-        &task_id,
-        state.pool.clone(),
-    )?;
+    let response =
+        services::items::fetch_topic_items_with_subtopics(&topic_id, &task_id, state.pool.clone())?;
     Ok(Json(response))
 }
 
@@ -93,5 +90,3 @@ pub async fn update_item_status(
     let response = services::items::update_item_status(item_id, status, state.pool.clone())?;
     Ok(Json(response))
 }
-
-

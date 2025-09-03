@@ -172,7 +172,10 @@ pub mod topic {
 
 pub mod items {
 
-    use crate::{helpers::dto::items::display::OptionDto, models::{item::Items, item_options::ItemOptions, passages::Passage}};
+    use crate::{
+        helpers::dto::items::display::OptionDto,
+        models::{item::Items, item_options::ItemOptions, passages::Passage},
+    };
 
     use super::*;
 
@@ -310,7 +313,7 @@ pub mod items {
 
     pub mod display {
         use super::*;
-    #[derive(Debug, Clone, Serialize, Deserialize)]
+        #[derive(Debug, Clone, Serialize, Deserialize)]
         pub struct OptionDto {
             pub id: String,
             pub label: String,
@@ -357,5 +360,51 @@ pub mod items {
             pub items: ItemsAndPassages,
             pub subtopics: Vec<SubtopicDto>,
         }
+    }
+}
+
+pub mod subject {
+    use crate::helpers::dto::items::Options;
+
+    use super::*;
+
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    pub struct ItemTransferDto {
+        pub passage: Vec<PassageDto>,
+        pub items: Vec<AcceptItemDto>,
+    }
+
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    pub struct PassageDto {
+        pub stem: String,
+        pub items: Vec<AcceptItemDto>,
+        pub subject_id: Uuid,
+        pub topic_id: Uuid,
+    }
+
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    pub struct AcceptItemDto {
+        pub question_type: ItemType,
+        pub subject_id: Uuid,
+        pub topic_id: Uuid,
+        pub title: String,
+        pub text: String,
+        pub difficulty: i16,
+        pub taxonomy: Taxonomy,
+        pub options: Vec<Options>,
+        pub passage_id: Option<Uuid>,
+        pub task_id: Uuid,
+    }
+
+    #[derive(Debug, QueryableByName, Serialize, Deserialize)]
+    pub struct ItemReadyStats {
+        #[diesel(sql_type = Text)]
+        pub topic_id: String,
+        #[diesel(sql_type = Text)]
+        pub topic_name: String,
+        #[diesel(sql_type = Integer)]
+        pub expected: i32,
+        #[diesel(sql_type = BigInt)]
+        pub ready: i64,
     }
 }
