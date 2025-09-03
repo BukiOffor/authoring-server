@@ -23,6 +23,7 @@ pub fn get_routes(state: Arc<AppState>) -> Router {
         .route("/get/{topic_id}/{task_id}", get(fetch_items_under_topic))
         .route("/delete/{item_id}", delete(delete_item))
         .route("/update/{item_id}", patch(update_item))
+        .route("/update/status/{item_id}", patch(update_item_status))
         .with_state(state)
 }
 
@@ -79,6 +80,14 @@ pub async fn update_item(
     Json(dto): Json<EditItemDto>,
 ) -> Result<Json<MessageDto>, ModuleError> {
     let response = services::items::update_item(item_id, dto, state.pool.clone())?;
+    Ok(Json(response))
+}
+
+pub async fn update_item_status(
+    State(state): State<Arc<AppState>>,
+    Path(item_id): Path<String>,
+) -> Result<Json<MessageDto>, ModuleError> {
+    let response = services::items::update_item_status(item_id, state.pool.clone())?;
     Ok(Json(response))
 }
 

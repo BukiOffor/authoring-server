@@ -31,13 +31,27 @@ pub fn create_item(
     })
 }
 
+pub fn update_item_status(item_id: String, pool: Arc<DbPool>) -> Result<MessageDto, ModuleError>  {
+    let mut conn = pool
+    .get()
+    .map_err(|e| ModuleError::InternalError(e.to_string()))?;
+    diesel::update(items::table.filter(items::id.eq(item_id.clone())))
+            .set((
+                items::status.eq(crate::models::item::ItemStatus::Ready), 
+                items::updated_at.eq(chrono::Local::now().naive_local()),
+            ))
+            .execute(&mut conn)
+            .map_err(|e| ModuleError::InternalError(e.to_string()))?;
+    Ok("Item has been updated successfully".into())
+}
+
 
 pub fn update_item(item_id: String, dto: EditItemDto, pool: Arc<DbPool>) -> Result<MessageDto, ModuleError>  {
     let mut conn = pool
         .get()
         .map_err(|e| ModuleError::InternalError(e.to_string()))?;
 
-    conn.transaction::<_, ModuleError, _>(|conn| {
+    conn.transaction::<_, ModuleError, _>(|conn: &mut diesel::r2d2::PooledConnection<diesel::r2d2::ConnectionManager<SqliteConnection>>| {
         
         let item = dto.item;
         let options = dto.options;
@@ -297,4 +311,3 @@ pub fn fetch_topic_items_with_subtopics(
 
 
 
-pub fn update_item_status() {}
