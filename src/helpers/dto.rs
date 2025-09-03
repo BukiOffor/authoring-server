@@ -172,7 +172,7 @@ pub mod topic {
 
 pub mod items {
 
-    use crate::models::{item::Items, item_options::ItemOptions, passages::Passage};
+    use crate::{helpers::dto::items::display::OptionDto, models::{item::Items, item_options::ItemOptions, passages::Passage}};
 
     use super::*;
 
@@ -291,9 +291,25 @@ pub mod items {
         pub options: Vec<Options>,
     }
 
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    pub struct EditItem {
+        pub item_id: String,
+        pub title: String,
+        pub text: String,
+        pub difficulty: i16,
+        pub taxonomy: Taxonomy,
+        pub passage_id: Option<Uuid>,
+        pub task_id: Uuid,
+    }
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    pub struct EditItemDto {
+        pub item: EditItem,
+        pub options: Vec<OptionDto>,
+    }
+
     pub mod display {
         use super::*;
-        #[derive(Debug, Serialize, Clone)]
+    #[derive(Debug, Clone, Serialize, Deserialize)]
         pub struct OptionDto {
             pub id: String,
             pub label: String,
@@ -315,6 +331,7 @@ pub mod items {
         #[derive(Debug, Serialize, Clone)]
 
         pub struct PassageViewDto {
+            pub id: String,
             pub stem: String,
             pub items: Vec<ItemDto>,
         }

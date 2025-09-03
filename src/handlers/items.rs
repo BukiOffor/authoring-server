@@ -3,6 +3,7 @@ use crate::helpers::dto::MessageDto;
 use crate::helpers::dto::items::*;
 use crate::{AppState, error::ModuleError, services};
 use axum::routing::delete;
+use axum::routing::patch;
 use axum::routing::post;
 use axum::{Json, extract::State};
 use axum::{Router, extract::Path, routing::get};
@@ -21,6 +22,7 @@ pub fn get_routes(state: Arc<AppState>) -> Router {
         .route("/create/passage", post(create_passage_and_items))
         .route("/get/{topic_id}/{task_id}", get(fetch_items_under_topic))
         .route("/delete/{item_id}", delete(delete_item))
+        .route("/update/{item_id}", patch(update_item))
         .with_state(state)
 }
 
@@ -70,3 +72,14 @@ pub async fn fetch_items_under_topic(
     )?;
     Ok(Json(response))
 }
+
+pub async fn update_item(
+    State(state): State<Arc<AppState>>,
+    Path(item_id): Path<String>,
+    Json(dto): Json<EditItemDto>,
+) -> Result<Json<MessageDto>, ModuleError> {
+    let response = services::items::update_item(item_id, dto, state.pool.clone())?;
+    Ok(Json(response))
+}
+
+

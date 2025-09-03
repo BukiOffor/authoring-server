@@ -6,7 +6,7 @@ use crate::{
     error::ModuleError, helpers::{
         self,
         dto::{
-            items::{display::*, ItemStats, PassageWithItems}, MessageDto
+            items::{display::*, EditItemDto, ItemStats, PassageWithItems}, MessageDto
         },
     }, insert, models::{item::Items, item_options::ItemOptions, passages::Passage}, schema::{item_options, items, passages, topics}, DbPool
 };
@@ -30,6 +30,43 @@ pub fn create_item(
         message: "Item has been created successfully".to_string(),
     })
 }
+
+
+pub fn update_item(item_id: String, dto: EditItemDto, pool: Arc<DbPool>) -> Result<MessageDto, ModuleError>  {
+    let mut conn = pool
+        .get()
+        .map_err(|e| ModuleError::InternalError(e.to_string()))?;
+
+    conn.transaction::<_, ModuleError, _>(|conn| {
+        
+        let item = dto.item;
+        let options = dto.options;
+        diesel::update(items::table.filter(items::id.eq(item_id.clone())))
+            .set((
+                items::title.eq(item.title),
+                items::text.eq(item.text),
+                items::difficulty.eq(item.difficulty),
+                items::taxonomy.eq(item.taxonomy),
+                items::updated_at.eq(chrono::Local::now().naive_local()),
+            ))
+            .execute(conn)
+            .map_err(|e| ModuleError::InternalError(e.to_string()))?;
+
+        for option in options {
+            diesel::update(item_options::table.filter(item_options::id.eq(option.id)))
+                .set((
+                    item_options::label.eq(option.label),
+                    item_options::value.eq(option.value),
+                    item_options::is_answer.eq(option.is_answer),
+                ))
+                .execute(conn)
+                .map_err(|e| ModuleError::InternalError(e.to_string()))?;
+        }  
+        Ok(())
+    })?;
+    Ok("Item has been updated successfully".into())
+}
+
 
 pub fn create_passage_and_items(
     pool: Arc<DbPool>,
@@ -88,7 +125,11 @@ pub fn delete_item(item_id: String, pool: Arc<DbPool>) -> Result<MessageDto, Mod
     let mut conn = pool
         .get()
         .map_err(|e| ModuleError::InternalError(e.to_string()))?;
-    diesel::delete(items::table.filter(items::id.eq(item_id))).execute(&mut conn)?;
+    conn.transaction::<_, ModuleError, _>(|conn| {
+        diesel::delete(items::table.filter(items::id.eq(item_id.clone()))).execute(conn)?;
+        diesel::delete(item_options::table.filter(item_options::item_id.eq(item_id))).execute(conn)?;
+        Ok(())
+    })?;
     Ok("Item has been deleted successfully".into())
 }
 
@@ -204,6 +245,7 @@ pub fn fetch_topic_items_with_subtopics(
                     .passages
                     .entry(passage_id.clone())
                     .or_insert_with(|| PassageViewDto {
+                        id: passage_model.id.clone(),
                         stem: passage_model.stem.clone(),
                         items: Vec::new(),
                     });
@@ -254,6 +296,5 @@ pub fn fetch_topic_items_with_subtopics(
 }
 
 
-pub fn update_item() {}
 
 pub fn update_item_status() {}
