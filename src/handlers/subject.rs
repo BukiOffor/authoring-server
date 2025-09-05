@@ -1,5 +1,6 @@
 use crate::helpers::dto::MessageDto;
 use crate::helpers::dto::auth::Otp;
+use crate::helpers::dto::items::ItemTotalStats;
 use crate::helpers::dto::subject::ItemReadyStats;
 use crate::helpers::jwt::Claims;
 use crate::{AppState, error::ModuleError};
@@ -24,6 +25,10 @@ pub fn get_routes(state: Arc<AppState>) -> Router {
         .route(
             "/publish/subject_id/{subject_id}/task/{task_id}",
             post(publish_items),
+        )
+        .route(
+            "/total/stats/subject_id/{subject_id}",
+            get(get_item_stats_for_subject),
         )
         .with_state(state)
 }
@@ -71,5 +76,14 @@ pub async fn send_otp(
         pool,
     )
     .await?;
+    Ok(Json(response))
+}
+
+pub async fn get_item_stats_for_subject(
+    State(state): State<Arc<AppState>>,
+    Path(subject_id): Path<String>,
+) -> Result<Json<Vec<ItemTotalStats>>, ModuleError> {
+    let response =
+        crate::services::subject::get_item_stats_for_subject(subject_id, state.pool.clone())?;
     Ok(Json(response))
 }

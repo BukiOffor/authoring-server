@@ -278,7 +278,10 @@ pub async fn send_otp(
 //     Ok(())
 // }
 
-pub fn get_item_stats_for_subject(subject_id: String, pool: Arc<DbPool>) -> Result<Vec<ItemTotalStats>, ModuleError> {
+pub fn get_item_stats_for_subject(
+    subject_id: String,
+    pool: Arc<DbPool>,
+) -> Result<Vec<ItemTotalStats>, ModuleError> {
     let mut conn = pool
         .get()
         .map_err(|e| ModuleError::InternalError(e.to_string()))?;
