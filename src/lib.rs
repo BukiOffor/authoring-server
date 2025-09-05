@@ -1,5 +1,6 @@
 pub mod handlers;
 pub mod helpers;
+pub mod mailer;
 pub mod models;
 pub mod services;
 use std::sync::Arc;
@@ -17,6 +18,7 @@ pub type DbConn = PooledConnection<ConnectionManager<SqliteConnection>>;
 
 pub struct AppState {
     pub pool: Arc<DbPool>,
+    pub otp_manager: helpers::otp::OtpManager,
 }
 
 pub mod config {

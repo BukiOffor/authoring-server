@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Activate Your Account</title>
+    <style>
+        /* Basic responsive styles for clients that support them */
+        @media screen and (max-width: 600px) {
+            .content-table {
+                width: 100% !important;
+            }
+            .main-heading {
+                font-size: 24px !important;
+            }
+            .paragraph {
+                font-size: 16px !important;
+                line-height: 1.6 !important;
+            }
+        }
+    </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f7fa; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+    <div style="display: none; max-height: 0; overflow: hidden;">
+        Just one more step to get started! Confirm your email to activate your account.
+    </div>
+
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+        <tr>
+            <td style="padding: 20px 0;">
+                <table align="center" border="0" cellpadding="0" cellspacing="0" width="600" class="content-table" style="border-collapse: collapse; margin: 0 auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); overflow: hidden;">
+                    <tr>
+                        <td align="center" style="padding: 40px 0 30px 0; background-color: #ffffff; color: #010000;">
+                            <img src="https://ipfs.io/ipfs/bafkreiha3r2ktymnimdpn7fssy35xkpgjmxg7h7hdoc4jua7epdkcumymy" alt="Cams Logo" width="80" style="display: block; border: 0;">
+                            {{!-- <h1 style="margin: 10px 0 0 0; font-size: 28px; font-weight: 600;">Welcome!</h1> --}}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding: 40px 30px;">
+                            <h2 class="main-heading" style="margin: 0 0 20px 0; font-size: 26px; font-weight: 600; color: #333333;">Activate Your Account</h2>
+                            <p class="paragraph" style="margin: 0 0 15px 0; font-size: 18px; line-height: 1.5; color: #555555;">
+                                Hello, <strong>{{name}}</strong>!
+                            </p>
+                            <p class="paragraph" style="margin: 0 0 30px 0; font-size: 18px; line-height: 1.5; color: #555555;">
+                                Thank you for your interest. Please click the button below to verify your email address and complete your registration.
+                            </p>
+                            
+                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <td align="center">
+                                        <a href="{{url}}" target="_blank" style="display: inline-block; padding: 15px 35px; font-size: 18px; font-weight: bold; color: #ffffff; text-decoration: none; background-image: linear-gradient(to right, #4a90e2, #50e3c2); border-radius: 5px; -webkit-font-smoothing: antialiased;">
+                                            Activate Account
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p class="paragraph" style="margin: 30px 0 15px 0; font-size: 16px; line-height: 1.5; color: #777777;">
+                                This link will expire in 24 hours. If you did not sign up for this account, you can safely ignore this email.
+                            </p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding: 0 30px 30px 30px; background-color: #ffffff;">
+                            <p style="margin: 0; font-size: 14px; color: #999999; text-align: center;">
+                                If the button above doesn't work, copy and paste this link into your browser:
+                            </p>
+                            <p style="margin: 10px 0 0 0; text-align: center;">
+                                <a href="{{url}}" target="_blank" style="color: #4a90e2; text-decoration: underline; word-break: break-all;">
+                                    {{url}}
+                                </a>
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <tr>
+                        <td style="padding: 20px 30px; background-color: #f4f7fa; text-align: center;">
+                            <p style="margin: 0; font-size: 12px; color: #999999;">
+                                &copy; 2025 Your Company Name. All rights reserved.<br>
+                                123 Street, London, United Kingdom
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

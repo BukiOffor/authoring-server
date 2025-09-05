@@ -1,5 +1,6 @@
 pub mod dto;
 pub mod jwt;
+pub mod otp;
 pub mod querys;
 
 use crate::{DbConn, error::ModuleError, schema};

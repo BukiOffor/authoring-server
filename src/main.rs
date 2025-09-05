@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use authoring_server::helpers::otp::OtpManager;
 use authoring_server::{AppState, config, handlers};
 use tower_http::{compression::CompressionLayer, trace::TraceLayer};
 use tracing::info;
@@ -15,7 +16,11 @@ async fn main() {
         .init();
 
     let pool = config::establish_connection();
-    let state: Arc<AppState> = AppState { pool }.into();
+    let state: Arc<AppState> = AppState {
+        pool,
+        otp_manager: OtpManager::new(5, 3),
+    }
+    .into();
     let app = handlers::get_routes(state)
         .layer(CompressionLayer::new())
         .layer(TraceLayer::new_for_http());

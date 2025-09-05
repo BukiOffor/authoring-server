@@ -39,12 +39,23 @@ pub enum ModuleError {
 
     #[error("{0}")]
     ConversionError(String),
+    #[error("Incorrect OTP")]
+    InvalidOtp,
 }
 
-#[derive(Debug, Default, Error, Serialize, Deserialize)]
+#[derive(Debug, Error, Serialize, Deserialize)]
 pub struct ErrorMessage {
     pub message: String,
     pub status_code: u32,
+}
+
+impl Default for ErrorMessage {
+    fn default() -> Self {
+        Self {
+            message: "Something went wrong, Please contact Adminstrator".to_string(),
+            status_code: 500,
+        }
+    }
 }
 
 impl std::fmt::Display for ErrorMessage {
@@ -65,7 +76,7 @@ impl ErrorMessage {
 impl IntoResponse for ModuleError {
     fn into_response(self) -> axum::response::Response {
         match self {
-            Self::InvalidToken => {
+            Self::InvalidToken | Self::InvalidOtp => {
                 let message = ErrorMessage::default().build(self.to_string(), 401);
                 (axum::http::StatusCode::UNAUTHORIZED, axum::Json(message)).into_response()
             }

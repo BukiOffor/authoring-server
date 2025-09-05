@@ -22,14 +22,14 @@ pub mod auth {
 
     #[derive(Debug, Serialize, Deserialize)]
     pub struct AuthBodyDto {
-        pub id: Uuid,
+        pub id: String,
         pub refresh_token: String,
         pub access_token: String,
         pub token_type: String,
     }
 
     impl AuthBodyDto {
-        pub fn new(access_token: String, refresh_token: String, id: Uuid) -> Self {
+        pub fn new(access_token: String, refresh_token: String, id: String) -> Self {
             Self {
                 id,
                 access_token,
@@ -45,15 +45,44 @@ pub mod auth {
         pub password: String,
     }
 
+    impl AuthPayloadDto {
+        pub fn new(email: String, password: String) -> Self {
+            Self { email, password }
+        }
+    }
+
     #[derive(Debug, Deserialize)]
     pub struct JwtPayloadDto {
-        pub id: Uuid,
+        pub id: String,
     }
 
     impl JwtPayloadDto {
-        pub fn new(id: Uuid) -> Self {
+        pub fn new(id: String) -> Self {
             Self { id }
         }
+    }
+
+    #[derive(Serialize, Deserialize, Clone, Debug)]
+    pub struct LoginResponse {
+        pub message: String,
+        pub id: Uuid,
+        pub roles: Vec<String>,
+        pub permissions: Vec<String>,
+        pub profile: UserLoginResponseDto,
+    }
+
+    #[derive(Serialize, Deserialize, Clone, Debug)]
+    pub struct UserLoginResponseDto {
+        pub email: String,
+        pub first_name: String,
+        pub last_name: String,
+    }
+
+    #[derive(Serialize, Deserialize, Clone, Debug)]
+    pub struct Otp {
+        pub code: String,
+        pub secret: String,
+        pub user_id: String,
     }
 }
 
@@ -174,10 +203,18 @@ pub mod items {
 
     use crate::{
         helpers::dto::items::display::OptionDto,
-        models::{item::Items, item_options::ItemOptions, passages::Passage},
+        models::{
+            item::{ItemStatus, Items},
+            item_options::ItemOptions,
+            passages::Passage,
+        },
     };
 
     use super::*;
+    #[derive(Debug, Serialize, Deserialize)]
+    pub struct UpdateItemStatus {
+        pub status: ItemStatus,
+    }
 
     #[derive(Debug, QueryableByName, Serialize, Deserialize)]
     pub struct ItemStats {
@@ -189,6 +226,22 @@ pub mod items {
         pub total_ready: i64,
         #[diesel(sql_type = BigInt)]
         pub total_published: i64,
+    }
+
+    #[derive(Debug, QueryableByName, Serialize, Deserialize)]
+    pub struct ItemTotalStats {
+        #[diesel(sql_type = Text)]
+        pub topic_id: String,
+        #[diesel(sql_type = Text)]
+        pub topic_name: String,
+        #[diesel(sql_type = Integer)]
+        pub expected_items: i32,
+        #[diesel(sql_type = BigInt)]
+        pub items_in_draft: i64,
+        #[diesel(sql_type = BigInt)]
+        pub ready_items: i64,
+        #[diesel(sql_type = BigInt)]
+        pub submitted_items: i64,
     }
 
     pub struct ItemWithOptions {
@@ -204,6 +257,7 @@ pub mod items {
 
     #[derive(Debug, Clone, Serialize, Deserialize)]
     pub struct Options {
+        pub id: String,
         pub position: i32,
         pub text: String,
         pub is_correct: bool,
@@ -259,10 +313,28 @@ pub mod items {
         pub text: String,
         pub difficulty: i16,
         pub taxonomy: Taxonomy,
-        pub options: Vec<Options>,
+        pub options: Vec<CreateOptions>,
         pub passage_id: Option<Uuid>,
         pub submit: Option<bool>,
         pub task_id: Uuid,
+    }
+
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    pub struct CreateOptions {
+        pub position: i32,
+        pub text: String,
+        pub is_correct: bool,
+    }
+
+    impl From<CreateOptions> for Options {
+        fn from(value: CreateOptions) -> Self {
+            Options {
+                id: Uuid::now_v7().into(),
+                position: value.position,
+                text: value.text,
+                is_correct: value.is_correct,
+            }
+        }
     }
 
     impl From<CreateItemDto> for ItemWithOptions {
@@ -271,7 +343,7 @@ pub mod items {
             let item = Items::from(item);
             let options = options
                 .into_iter()
-                .map(|option| ItemOptions::from(option, item.id.clone()))
+                .map(|option| ItemOptions::from(option.into(), item.id.clone()))
                 .collect();
             ItemWithOptions::from(item, options)
         }
@@ -376,24 +448,26 @@ pub mod subject {
 
     #[derive(Debug, Clone, Serialize, Deserialize)]
     pub struct PassageDto {
+        pub id: String,
         pub stem: String,
         pub items: Vec<AcceptItemDto>,
-        pub subject_id: Uuid,
-        pub topic_id: Uuid,
+        pub subject_id: String,
+        pub topic_id: String,
     }
 
     #[derive(Debug, Clone, Serialize, Deserialize)]
     pub struct AcceptItemDto {
+        pub id: String,
         pub question_type: ItemType,
-        pub subject_id: Uuid,
-        pub topic_id: Uuid,
+        pub subject_id: String,
+        pub topic_id: String,
         pub title: String,
         pub text: String,
         pub difficulty: i16,
         pub taxonomy: Taxonomy,
         pub options: Vec<Options>,
-        pub passage_id: Option<Uuid>,
-        pub task_id: Uuid,
+        pub passage_id: Option<String>,
+        pub task_id: String,
     }
 
     #[derive(Debug, QueryableByName, Serialize, Deserialize)]

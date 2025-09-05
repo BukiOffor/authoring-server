@@ -1,7 +1,6 @@
 use crate::helpers::dto::items::Options;
 use diesel::{AsChangeset, Identifiable, Insertable, Queryable, QueryableByName, Selectable};
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
 #[derive(
     Debug,
@@ -29,11 +28,22 @@ pub struct ItemOptions {
 impl ItemOptions {
     pub fn from(option: Options, item_id: String) -> Self {
         ItemOptions {
-            id: Uuid::now_v7().into(),
+            id: option.id,
             item_id,
             label: option.text,
             value: option.position as i64,
             is_answer: option.is_correct,
+        }
+    }
+}
+
+impl From<ItemOptions> for Options {
+    fn from(value: ItemOptions) -> Self {
+        Self {
+            id: value.id,
+            position: value.value as i32,
+            text: value.label,
+            is_correct: value.is_answer,
         }
     }
 }

@@ -1,4 +1,4 @@
-use crate::helpers::dto::auth::{AuthBodyDto, JwtPayloadDto};
+use crate::helpers::dto::auth::{AuthBodyDto, JwtPayloadDto, LoginResponse};
 use crate::helpers::dto::tasks::TaskMigrationDto;
 use crate::helpers::password_hasher;
 use crate::models::tasks::Tasks;
@@ -11,7 +11,6 @@ use diesel::{ExpressionMethods, OptionalExtension, QueryDsl, RunQueryDsl, Select
 use reqwest::Client;
 use std::env;
 use std::sync::Arc;
-use uuid::Uuid;
 
 pub async fn authenticate_user(
     payload: AuthPayloadDto,
@@ -19,6 +18,10 @@ pub async fn authenticate_user(
 ) -> Result<JwtPayloadDto, ModuleError> {
     let mut conn = pool
         .get()
+        .map_err(|e| ModuleError::InternalError(e.to_string()))?;
+    let client = Client::builder()
+        .cookie_store(true)
+        .build()
         .map_err(|e| ModuleError::InternalError(e.to_string()))?;
     let user: Option<User> = schema::user::table
         .filter(schema::user::email.eq(payload.email.clone()))
@@ -33,25 +36,18 @@ pub async fn authenticate_user(
         if !is_password {
             return Err(ModuleError::WrongCredentials);
         }
-        if let Ok(auth) = try_login(payload.clone()).await {
-            user.bearer_token = auth.refresh_token;
+        if let Ok(_) = try_login(payload.clone(), &client).await {
+            user.bearer_token = String::new();
             // ❌❌❌ User object does not update
-            populate_table(
-                user.clone(),
-                &mut conn,
-                &reqwest::Client::new(),
-                auth.access_token,
-            )
-            .await?;
+            populate_table(user.clone(), &mut conn, &client).await?;
         }
-        let id: Uuid = Uuid::parse_str(&user.id).map_err(|e| ModuleError::Error(e.to_string()))?;
-        return Ok(JwtPayloadDto::new(id));
+        return Ok(JwtPayloadDto::new(user.id));
     } else {
         let url = env::var("UPSTREAM_SERVER")
             .map(|server| format!("{}/auth", server))
             .map_err(|e| ModuleError::Error(e.to_string()))?;
 
-        let client = reqwest::Client::new();
+        //let client = reqwest::Client::new();
         let response = client.post(url).json(&payload).send().await.map_err(|_| {
             ModuleError::InternalError(
                 "Upstream Server is not active yet, please contact Adminstrator".into(),
@@ -87,10 +83,10 @@ pub async fn authenticate_user(
                 .map_err(|e| ModuleError::Error(e.to_string()))?;
             let dto: UserDto = serde_json::from_str(&body)
                 .map_err(|e| ModuleError::InternalError(e.to_string()))?;
-            let id = dto.id.clone();
+            let id = dto.id.clone().into();
             let password = password_hasher(payload.password.clone())?;
             let user = User::from_dto(dto, password, auth_response.refresh_token);
-            populate_table(user, &mut conn, &client, auth_response.access_token.clone()).await?;
+            populate_table(user, &mut conn, &client).await?;
 
             Ok(JwtPayloadDto::new(id))
         } else {
@@ -105,7 +101,6 @@ pub async fn populate_table(
     user: User,
     conn: &mut DbConn,
     client: &Client,
-    access_token: String,
 ) -> Result<(), ModuleError> {
     let url = env::var("UPSTREAM_SERVER")
         .map(|server| format!("{}/tasks/migration/author", server))
@@ -113,7 +108,6 @@ pub async fn populate_table(
 
     let result = client
         .get(url)
-        .bearer_auth(access_token)
         .send()
         .await
         .map_err(|e| ModuleError::InternalError(e.to_string()))?;
@@ -132,8 +126,10 @@ pub async fn populate_table(
 
     conn.transaction::<_, ModuleError, _>(|conn| {
         diesel::insert_into(schema::user::table)
-            .values(user)
-            .on_conflict_do_nothing()
+            .values(&user)
+            .on_conflict(schema::user::id)
+            .do_update()
+            .set(schema::user::bearer_token.eq(&user.bearer_token))
             .execute(conn)
             .map_err(|e| ModuleError::InternalError(e.to_string()))?;
         for t in task.tasks {
@@ -157,12 +153,14 @@ pub async fn populate_table(
     Ok(())
 }
 
-async fn try_login(payload: AuthPayloadDto) -> Result<AuthBodyDto, ModuleError> {
+pub async fn try_login(
+    payload: AuthPayloadDto,
+    client: &Client,
+) -> Result<LoginResponse, ModuleError> {
     let url = env::var("UPSTREAM_SERVER")
         .map(|server| format!("{}/auth", server))
         .map_err(|e| ModuleError::Error(e.to_string()))?;
 
-    let client = reqwest::Client::new();
     let response = client
         .post(url)
         .json(&payload)
@@ -175,12 +173,13 @@ async fn try_login(payload: AuthPayloadDto) -> Result<AuthBodyDto, ModuleError> 
             .text()
             .await
             .map_err(|e| ModuleError::Error(e.to_string()))?;
-        let auth_response: AuthBodyDto =
+        let auth_response: LoginResponse =
             serde_json::from_str(&body).map_err(|e| ModuleError::InternalError(e.to_string()))?;
+
         Ok(auth_response)
     } else {
         Err(ModuleError::InternalError(
-            "Upstream Server is Offline".into(),
+            "Upstream server is offline".into(),
         ))
     }
 }

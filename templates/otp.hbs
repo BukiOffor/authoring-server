@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Registration</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .content {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        .otp {
+            font-size: 32px;
+            font-weight: bold;
+            color: #ffffff;
+            text-align: center;
+            padding: 10px;
+            background-color: #0b8e18;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .note {
+            font-size: 14px;
+            color: #666;
+            font-style: italic;
+        }
+         .logo {
+            max-width: 150px;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="https://ipfs.io/ipfs/bafkreiha3r2ktymnimdpn7fssy35xkpgjmxg7h7hdoc4jua7epdkcumymy" alt="Cams Logo" class="logo">
+    </div>
+    <div class="content">
+         <h1>OTP Verification</h1>
+        
+        <p>Hello {{name}},</p>
+        
+        <p>Your One-Time Password (OTP) for verification is:</p>
+        
+        <div class="otp">{{otp}}</div>
+        
+        <p>Please use this OTP to complete your verification process. This code will expire in 10 minutes.</p>
+        
+        <p class="note">If you didn't request this OTP, please ignore this email.</p>
+        
+        <p>Thank you for using our service!</p>
+        
+        <p>Best regards,<br>Cams Team</p>
+    </div>
+</body>
+</html>

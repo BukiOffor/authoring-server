@@ -1,4 +1,5 @@
-use crate::helpers::dto::items::CreateItemDto;
+use crate::helpers::dto::items::{CreateItemDto, Options};
+use crate::helpers::dto::subject::AcceptItemDto;
 use crate::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
 use diesel::backend::Backend;
@@ -186,6 +187,24 @@ impl From<CreateItemDto> for Items {
             passage_id: item.passage_id.map(|p| p.to_string()),
             taxonomy: item.taxonomy,
             task_id: item.task_id.to_string(),
+        }
+    }
+}
+
+impl AcceptItemDto {
+    pub fn from(value: Items, options: Vec<Options>) -> Self {
+        Self {
+            id: value.id,
+            question_type: value.question_type,
+            subject_id: value.subject_id,
+            topic_id: value.topic_id,
+            title: value.title,
+            text: value.text,
+            difficulty: value.difficulty,
+            taxonomy: value.taxonomy,
+            options,
+            passage_id: value.passage_id,
+            task_id: value.task_id,
         }
     }
 }

@@ -94,6 +94,7 @@ diesel::table! {
         institution -> Text,
         title -> Text,
         bearer_token -> Text,
+        secret -> Nullable<Text>,
     }
 }
 

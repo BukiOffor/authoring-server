@@ -34,6 +34,7 @@ pub struct User {
     pub department: String,
     pub institution: String,
     pub bearer_token: String,
+    pub secret: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -69,6 +70,7 @@ impl User {
             department: dto.department,
             institution: dto.institution,
             bearer_token: token,
+            secret: None,
         }
     }
 }

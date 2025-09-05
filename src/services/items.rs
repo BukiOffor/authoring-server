@@ -142,7 +142,7 @@ pub fn fetch_item_stats(subject_id: &str, pool: Arc<DbPool>) -> Result<ItemStats
             COUNT(*) AS total_items,
             COUNT(*) FILTER (WHERE i.status = '"Draft"') AS total_drafts,
             COUNT(*) FILTER (WHERE i.status = '"Ready"') AS total_ready,
-            COUNT(*) FILTER (WHERE i.status = '"Published"') AS total_published
+            COUNT(*) FILTER (WHERE i.status = '"Submitted"') AS total_published
         FROM items i
         WHERE i.subject_id = $1
         AND i.task_id = $2

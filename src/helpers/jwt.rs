@@ -14,7 +14,6 @@ use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode}
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use std::sync::LazyLock;
-use uuid::Uuid;
 
 use crate::{
     error::ModuleError,
@@ -28,7 +27,7 @@ static KEYS: LazyLock<Keys> = LazyLock::new(|| {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
-    pub user_id: Uuid,
+    pub user_id: String,
     pub exp: usize,
 }
 
@@ -44,7 +43,7 @@ pub async fn generate_token(payload: JwtPayloadDto) -> Result<Json<AuthBodyDto>,
         .timestamp() as usize;
 
     let mut claims = Claims {
-        user_id: payload.id,
+        user_id: payload.id.clone(),
         exp: expiration,
     };
 
