@@ -95,6 +95,9 @@ diesel::table! {
         title -> Text,
         bearer_token -> Text,
         secret -> Nullable<Text>,
+
+        phone_number -> Nullable<Text>,
+        alt_phone_number -> Nullable<Text>,
     }
 }
 

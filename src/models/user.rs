@@ -35,6 +35,8 @@ pub struct User {
     pub institution: String,
     pub bearer_token: String,
     pub secret: Option<String>,
+    pub phone_number: Option<String>,
+    pub alt_phone_number: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -51,6 +53,8 @@ pub struct UserDto {
     pub title: String,
     pub department: String,
     pub institution: String,
+    pub phone_number: Option<String>,
+    pub alt_phone_number: Option<String>,
 }
 
 impl User {
@@ -71,6 +75,8 @@ impl User {
             institution: dto.institution,
             bearer_token: token,
             secret: None,
+            phone_number: dto.phone_number,
+            alt_phone_number: dto.alt_phone_number,
         }
     }
 }

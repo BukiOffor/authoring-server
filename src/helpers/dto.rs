@@ -482,3 +482,18 @@ pub mod subject {
         pub ready: i64,
     }
 }
+
+pub mod user {
+    use super::*;
+
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    pub struct UpdateUserDto {
+        pub title: String,
+        pub name: String,
+        pub email: String,
+        pub institution: String,
+        pub department: String,
+        pub phone_number: String,
+        pub alt_phone_number: String,
+    }
+}
