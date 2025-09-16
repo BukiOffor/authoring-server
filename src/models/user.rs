@@ -58,7 +58,7 @@ pub struct UserDto {
 }
 
 impl User {
-    pub fn from_dto(dto: UserDto, password: String, token: String) -> User {
+    pub fn from_dto(dto: UserDto, password: String) -> User {
         Self {
             id: dto.id.into(),
             username: dto.username.unwrap_or_default(),
@@ -73,7 +73,7 @@ impl User {
             title: dto.title,
             department: dto.department,
             institution: dto.institution,
-            bearer_token: token,
+            bearer_token: String::new(),
             secret: None,
             phone_number: dto.phone_number,
             alt_phone_number: dto.alt_phone_number,

@@ -1,4 +1,4 @@
-use crate::helpers::dto::auth::{AuthBodyDto, JwtPayloadDto, LoginResponse};
+use crate::helpers::dto::auth::{JwtPayloadDto, LoginResponse};
 use crate::helpers::dto::tasks::TaskMigrationDto;
 use crate::helpers::password_hasher;
 use crate::models::tasks::Tasks;
@@ -11,6 +11,7 @@ use diesel::{ExpressionMethods, OptionalExtension, QueryDsl, RunQueryDsl, Select
 use reqwest::Client;
 use std::env;
 use std::sync::Arc;
+use crate::helpers::dto::MessageDto;
 
 pub async fn authenticate_user(
     payload: AuthPayloadDto,
@@ -59,7 +60,7 @@ pub async fn authenticate_user(
                 .text()
                 .await
                 .map_err(|e| ModuleError::Error(e.to_string()))?;
-            let auth_response: AuthBodyDto = serde_json::from_str(&body)
+            let auth_response: LoginResponse = serde_json::from_str(&body)
                 .map_err(|e| ModuleError::InternalError(e.to_string()))?;
 
             let url = env::var("UPSTREAM_SERVER")
@@ -68,7 +69,7 @@ pub async fn authenticate_user(
 
             let result = client
                 .get(url)
-                .bearer_auth(auth_response.access_token.clone())
+                //.bearer_auth(auth_response.access_token.clone())
                 .send()
                 .await
                 .map_err(|e| ModuleError::InternalError(e.to_string()))?;
@@ -85,7 +86,7 @@ pub async fn authenticate_user(
                 .map_err(|e| ModuleError::InternalError(e.to_string()))?;
             let id = dto.id.clone().into();
             let password = password_hasher(payload.password.clone())?;
-            let user = User::from_dto(dto, password, auth_response.refresh_token);
+            let user = User::from_dto(dto, password);
             populate_table(user, &mut conn, &client).await?;
 
             Ok(JwtPayloadDto::new(id))
@@ -132,11 +133,17 @@ pub async fn populate_table(
             .set(schema::user::bearer_token.eq(&user.bearer_token))
             .execute(conn)
             .map_err(|e| ModuleError::InternalError(e.to_string()))?;
+
         for t in task.tasks {
             let task = Tasks::from(t);
             diesel::insert_into(schema::tasks::table)
                 .values(&task)
-                .on_conflict_do_nothing()
+                .on_conflict((schema::tasks::task_id, schema::tasks::topic_id))
+                .do_update()
+                .set((
+                    schema::tasks::num_of_questions.eq(&task.num_of_questions),
+                    schema::tasks::due_date.eq(&task.due_date),
+                ))
                 .execute(conn)
                 .map_err(|e| ModuleError::InternalError(e.to_string()))?;
         }
@@ -177,6 +184,17 @@ pub async fn try_login(
             serde_json::from_str(&body).map_err(|e| ModuleError::InternalError(e.to_string()))?;
 
         Ok(auth_response)
+    } else if response.status().is_client_error() {
+        // parse body into server error type
+        let message: MessageDto = serde_json::from_str(&response.text().await.unwrap_or_default())
+            .map_err(|_| {
+                ModuleError::InternalError(
+                    "Could not deserialize error message from upstream server".into(),
+                )
+            })?;
+        return Err(ModuleError::InternalError(
+            format!("Upstream: {}",message.message).into(),
+        ));
     } else {
         Err(ModuleError::InternalError(
             "Upstream server is offline".into(),

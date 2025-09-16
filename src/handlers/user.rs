@@ -2,8 +2,8 @@ use crate::helpers::dto::MessageDto;
 use crate::helpers::dto::user::UpdateUserDto;
 use crate::services;
 use crate::{AppState, error::ModuleError};
-use axum::extract::Path;
 use axum::Router;
+use axum::extract::Path;
 use axum::routing::{patch, post};
 use axum::{Json, extract::State};
 use std::sync::Arc;
@@ -31,10 +31,10 @@ pub async fn update_profile(
     Ok(Json(response))
 }
 
-pub async fn set_secret_password(){
+pub async fn set_secret_password() {
     unimplemented!()
 }
 
-pub async fn reset_password(){
+pub async fn reset_password() {
     unimplemented!()
 }

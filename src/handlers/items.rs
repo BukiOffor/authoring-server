@@ -1,7 +1,9 @@
 use crate::helpers::dto::MessageDto;
 use crate::helpers::dto::items::display::TopicItemsDto;
 use crate::helpers::dto::items::*;
+use crate::models::item::ItemStatus;
 use crate::{AppState, error::ModuleError, services};
+use axum::extract::Query;
 use axum::routing::delete;
 use axum::routing::patch;
 use axum::routing::post;
@@ -61,13 +63,21 @@ pub async fn delete_item(
     let response = services::items::delete_item(item_id, state.pool.clone())?;
     Ok(Json(response))
 }
-
+#[derive(Debug, serde::Deserialize)]
+pub struct StatusDto {
+    status: ItemStatus,
+}
 pub async fn fetch_items_under_topic(
     State(state): State<Arc<AppState>>,
+    Query(query): Query<StatusDto>,
     Path((topic_id, task_id)): Path<(String, String)>,
 ) -> Result<Json<TopicItemsDto>, ModuleError> {
-    let response =
-        services::items::fetch_topic_items_with_subtopics(&topic_id, &task_id, state.pool.clone())?;
+    let response = services::items::fetch_topic_items_with_subtopics(
+        &topic_id,
+        &task_id,
+        query.status,
+        state.pool.clone(),
+    )?;
     Ok(Json(response))
 }
 

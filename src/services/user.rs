@@ -16,9 +16,11 @@ pub fn update_user(
     let mut conn = pool
         .get()
         .map_err(|e| ModuleError::InternalError(e.to_string()))?;
-    let names: Vec<_>= payload.name.split(" ").collect();
+    let names: Vec<_> = payload.name.split(" ").collect();
     if names.len() < 2 {
-        return Err(ModuleError::ParseError("Expected full name to be more than 1 word".to_string()));
+        return Err(ModuleError::ParseError(
+            "Expected full name to be more than 1 word".to_string(),
+        ));
     }
     let last_name = names[0].to_string();
     let first_name = names[1..].join(" ");
@@ -37,11 +39,10 @@ pub fn update_user(
     Ok("User updated successfully".into())
 }
 
-
-pub fn set_secret_password(){
+pub fn set_secret_password() {
     unimplemented!()
 }
 
-pub fn reset_password(){
+pub fn reset_password() {
     unimplemented!()
 }
