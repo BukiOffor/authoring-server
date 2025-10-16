@@ -36,7 +36,7 @@ pub fn create_item(
         message: "Item has been created successfully".to_string(),
     })
 }
-
+// if item status is ready, validate that all the options are avail and correct
 pub fn update_item_status(
     item_id: String,
     status: ItemStatus,
@@ -285,6 +285,7 @@ pub fn fetch_topic_items_with_subtopics(
                     .entry(passage_id.clone())
                     .or_insert_with(|| PassageViewDto {
                         id: passage_model.id.clone(),
+                        rubric: passage_model.rubric.clone().unwrap_or_default(),
                         stem: passage_model.stem.clone(),
                         items: Vec::new(),
                     });
@@ -295,7 +296,7 @@ pub fn fetch_topic_items_with_subtopics(
         }
     }
 
-    // --- Step 5: Assemble the final response DTO ---
+    // Assemble the final response DTO ---
     let root_data = data_by_topic
         .remove(parent_topic_id)
         .unwrap_or_else(|| TopicData {

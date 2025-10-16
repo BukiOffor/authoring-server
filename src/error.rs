@@ -31,8 +31,8 @@ pub enum ModuleError {
     #[error("Incorrect Username or Password")]
     WrongCredentials,
 
-    #[error("data not available in database")]
-    ItemNotFound,
+    #[error("{0}")]
+    ItemNotFound(String),
 
     #[error("{0}")]
     Error(String),
@@ -84,7 +84,7 @@ impl IntoResponse for ModuleError {
                 let message = ErrorMessage::default().build(self.to_string(), 403);
                 (axum::http::StatusCode::FORBIDDEN, axum::Json(message)).into_response()
             }
-            Self::ItemNotFound => {
+            Self::ItemNotFound(_) => {
                 let message = ErrorMessage::default().build(self.to_string(), 404);
                 (axum::http::StatusCode::NOT_FOUND, axum::Json(message)).into_response()
             }

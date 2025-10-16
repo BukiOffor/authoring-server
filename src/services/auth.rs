@@ -1,3 +1,4 @@
+use crate::helpers::dto::MessageDto;
 use crate::helpers::dto::auth::{JwtPayloadDto, LoginResponse};
 use crate::helpers::dto::tasks::TaskMigrationDto;
 use crate::helpers::password_hasher;
@@ -11,7 +12,6 @@ use diesel::{ExpressionMethods, OptionalExtension, QueryDsl, RunQueryDsl, Select
 use reqwest::Client;
 use std::env;
 use std::sync::Arc;
-use crate::helpers::dto::MessageDto;
 
 pub async fn authenticate_user(
     payload: AuthPayloadDto,
@@ -155,6 +155,14 @@ pub async fn populate_table(
                 .execute(conn)
                 .map_err(|e| ModuleError::InternalError(e.to_string()))?;
         }
+        for tos in task.topic_tos{
+             diesel::insert_into(schema::tos::table)
+                .values(&tos)
+                .on_conflict_do_nothing()
+                .execute(conn)
+                .map_err(|e| ModuleError::InternalError(e.to_string()))?;
+        }
+       
         Ok(())
     })?;
     Ok(())
@@ -193,7 +201,7 @@ pub async fn try_login(
                 )
             })?;
         return Err(ModuleError::InternalError(
-            format!("Upstream: {}",message.message).into(),
+            format!("Upstream: {}", message.message).into(),
         ));
     } else {
         Err(ModuleError::InternalError(

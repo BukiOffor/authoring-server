@@ -56,6 +56,7 @@ pub mod config {
         let manager =
             diesel::r2d2::ConnectionManager::<SqliteConnection>::new(database_url.to_string());
         diesel::r2d2::Pool::builder()
+            .max_size(2)
             .build(manager)
             .expect("Failed to create r2d2 pool for SQLite")
             .into()

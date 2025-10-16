@@ -14,7 +14,6 @@ use crate::{fetch, helpers};
 use diesel::prelude::*;
 use helpers::dto::auth::AuthPayloadDto;
 use reqwest::Client;
-use serde_json::json;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -109,38 +108,6 @@ pub async fn publish_items(
     Ok("Items published successfully".into())
 }
 
-pub async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Create a client with cookie store enabled
-    let client = Client::builder()
-        .cookie_store(true) // This is key - enables cookie persistence
-        .build()?;
-
-    // 1. Login and receive authentication cookie
-    let login_response = client
-        .post("http://localhost:8000/auth")
-        .json(&json!({
-            "email": "ebuka2264@yahoo.com",
-            "password": "password"
-        }))
-        .send()
-        .await?;
-
-    println!("Login status: {}", login_response.status());
-
-    // The cookie is automatically stored by reqwest!
-    // You can inspect the cookies if needed
-    for cookie in login_response.cookies() {
-        println!("Received cookie: {}={}", cookie.name(), cookie.value());
-    }
-
-    // 2. Make authenticated request - cookies are sent automatically
-    let protected_response = client.get("http://localhost:8000/ping").send().await?;
-
-    println!("Protected status: {}", protected_response.status());
-    println!("Protected response: {}", protected_response.text().await?);
-
-    Ok(())
-}
 
 pub fn build_items_for_publishing(
     subject_id: &str,
@@ -239,6 +206,7 @@ pub fn build_items_for_publishing(
 
         let passage_with_items = PassageDto {
             id: passage.id,
+            rubric: passage.rubric.unwrap_or_default(),
             stem: passage.stem,
             topic_id: passage.topic_id,
             subject_id: passage.subject_id,

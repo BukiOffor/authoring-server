@@ -118,13 +118,14 @@ macro_rules! fetch {
             .optional()
             .map_err(|e| {
                 ModuleError::InternalError(format!(
-                    "Error fetching item from {} where {} = {}: {}",
-                    stringify!($table),
-                    stringify!($filter),
+                    "Error fetching {}: {}",
                     $value,
                     e
                 ))
             })?
-            .ok_or(ModuleError::ItemNotFound)?
+            .ok_or(ModuleError::ItemNotFound(format!(
+                "{} not found in system",
+                $value
+            )))?
     }};
 }

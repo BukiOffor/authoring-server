@@ -1,24 +1,19 @@
 use std::{collections::HashMap, sync::Arc};
 
 use crate::{
-    DbPool,
-    error::ModuleError,
-    helpers::{self, dto::topic::*},
+    error::ModuleError, fetch, helpers::{self, dto::topic::*}, models::tos::ToS, schema, DbConn, DbPool
 };
 
 use diesel::prelude::*;
 
 pub fn fetch_subject_topics(
     subject_id: &str,
-    pool: Arc<DbPool>,
+    conn:  &mut DbConn,
 ) -> Result<Vec<TopicNode>, ModuleError> {
     use crate::schema::{tasks::dsl as tk, topics::dsl as t};
 
-    let mut conn = pool
-        .get()
-        .map_err(|e| ModuleError::InternalError(e.to_string()))?;
 
-    let active_task = helpers::get_current_user_task(&mut conn)?;
+    let active_task = helpers::get_current_user_task(conn)?;
     if let Some(task_id) = active_task {
         let flat_topics = t::topics
             .left_join(tk::tasks.on(tk::topic_id.eq(t::id).and(tk::subject_id.eq(t::subject_id))))
@@ -31,7 +26,7 @@ pub fn fetch_subject_topics(
                 tk::task_id.nullable(),
                 tk::num_of_questions.nullable(),
             ))
-            .load::<FlatTopic>(&mut conn)?;
+            .load::<FlatTopic>(conn)?;
         return Ok(build_hierarchy(flat_topics));
     }
 
@@ -43,12 +38,56 @@ pub fn fetch_subtopics_under_topic(
     topic_id: &str,
     pool: Arc<DbPool>,
 ) -> Result<Vec<TopicNode>, ModuleError> {
-    let tree = fetch_subject_topics(subject_id, pool)?;
+      let mut conn = pool
+        .get()
+        .map_err(|e| ModuleError::InternalError(e.to_string()))?;
+    let tree = fetch_subject_topics(subject_id, &mut conn)?;
     if let Some(subs) = tree.iter().find_map(|t| t.find_subtopics(topic_id)) {
         return Ok(subs);
     }
     Ok(vec![])
 }
+
+pub fn fetch_subtopics_item_stats(
+    subject_id: &str,
+    topic_id: &str,
+    pool: Arc<DbPool>,
+) -> Result<TopicMetaData, ModuleError> {
+      let mut conn = pool
+        .get()
+        .map_err(|e| ModuleError::InternalError(e.to_string()))?;
+    // Get the full topic tree for the subject
+    let tree = fetch_subject_topics(subject_id, &mut conn)?;
+
+    // Find the node for the requested topic
+    fn find_node<'a>(nodes: &'a [TopicNode], topic_id: &str) -> Option<&'a TopicNode> {
+        for node in nodes {
+            if node.id == topic_id {
+                return Some(node);
+            }
+            if let Some(found) = find_node(&node.subtopics, topic_id) {
+                return Some(found);
+            }
+        }
+        None
+    }
+    if let Some(node) = find_node(&tree, topic_id) {
+        let tos: ToS = fetch!(schema::tos::table, schema::tos::sub_topic_id, topic_id, ToS, conn);
+        Ok(TopicMetaData {
+            id: node.id.clone(),
+            name: node.name.clone(),
+            num_of_questions: node.num_of_questions,
+            expected_total_count: node.expected_total_count,
+            task_id: node.task_id.clone(),
+            item_type: tos.item_type,
+            number_of_passages: tos.number_of_passages,
+            total_items_in_passage: tos.total_items_in_passage,
+        })
+    } else {
+        Err(ModuleError::ItemNotFound(format!("Topic {} not found", topic_id)))
+    }
+}
+
 
 pub fn build_hierarchy(flat_topics: Vec<FlatTopic>) -> Vec<TopicNode> {
     let mut children_by_parent: HashMap<Option<String>, Vec<FlatTopic>> = HashMap::new();

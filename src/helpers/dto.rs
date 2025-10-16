@@ -123,7 +123,7 @@ pub mod topics {
 }
 
 pub mod tasks {
-    use crate::models::tasks::Tasks;
+    use crate::models::{tasks::Tasks, tos::ToSDto};
 
     use super::*;
 
@@ -131,6 +131,7 @@ pub mod tasks {
     pub struct TaskMigrationDto {
         pub tasks: Vec<TaskDetails>,
         pub topics: Vec<super::topics::TopicDto>,
+        pub topic_tos: Vec<ToSDto>,
     }
 
     #[derive(Serialize, Deserialize, Clone)]
@@ -172,6 +173,18 @@ pub mod topic {
         pub parent_topic_id: Option<String>,
         pub task_id: Option<String>,
         pub num_of_questions: Option<i32>,
+    }
+
+    #[derive(Debug, Serialize, Deserialize, Clone)]
+    pub struct TopicMetaData {
+        pub id: String,
+        pub name: String,
+        pub num_of_questions: Option<i32>,
+        pub expected_total_count: i64,
+        pub task_id: Option<String>,
+        pub item_type: ItemType,
+        pub number_of_passages: i32,
+        pub total_items_in_passage: i32,
     }
 
     #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -267,6 +280,7 @@ pub mod items {
     #[derive(Debug, Clone, Serialize, Deserialize)]
     pub struct PassageDto {
         pub stem: String,
+        pub rubric: String,
         pub items: Vec<CreateItemDto>,
         pub subject_id: Uuid,
         pub topic_id: Uuid,
@@ -290,6 +304,7 @@ pub mod items {
         pub fn build_passage(&self) -> Passage {
             Passage {
                 id: Uuid::now_v7().to_string(),
+                rubric: Some(self.rubric.clone()),
                 stem: self.stem.clone(),
                 topic_id: self.topic_id.to_string(),
                 subject_id: self.subject_id.to_string(),
@@ -318,6 +333,7 @@ pub mod items {
         pub submit: Option<bool>,
         pub task_id: Uuid,
     }
+
 
     #[derive(Debug, Clone, Serialize, Deserialize)]
     pub struct CreateOptions {
@@ -408,6 +424,7 @@ pub mod items {
 
         pub struct PassageViewDto {
             pub id: String,
+            pub rubric: String,
             pub stem: String,
             pub items: Vec<ItemDto>,
         }
@@ -449,6 +466,7 @@ pub mod subject {
     #[derive(Debug, Clone, Serialize, Deserialize)]
     pub struct PassageDto {
         pub id: String,
+        pub rubric: String,
         pub stem: String,
         pub items: Vec<AcceptItemDto>,
         pub subject_id: String,

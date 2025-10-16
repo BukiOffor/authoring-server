@@ -3,4 +3,5 @@ pub mod item_options;
 pub mod passages;
 pub mod tasks;
 pub mod topic;
+pub mod tos;
 pub mod user;

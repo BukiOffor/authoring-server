@@ -47,6 +47,7 @@ diesel::table! {
         created_at -> Timestamp,
         updated_at -> Timestamp,
         subject_id -> Text,
+        rubric -> Nullable<Text>,
     }
 }
 
@@ -79,6 +80,21 @@ diesel::table! {
 }
 
 diesel::table! {
+    tos (id) {
+        id -> Text,
+        subject_id -> Text,
+        num_of_questions -> Integer,
+        start_range -> Integer,
+        end_range -> Integer,
+        item_type -> Text,
+        number_of_passages -> Integer,
+        total_items_in_passage -> Integer,
+        topic_id -> Text,
+        sub_topic_id -> Text,
+    }
+}
+
+diesel::table! {
     user (id) {
         id -> Text,
         email -> Text,
@@ -107,5 +123,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     passages,
     tasks,
     topics,
+    tos,
     user,
 );
