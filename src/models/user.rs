@@ -2,8 +2,6 @@ use crate::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 
-use crate::Uuid;
-
 #[derive(
     Debug,
     Clone,
@@ -41,13 +39,13 @@ pub struct User {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct UserDto {
-    pub id: Uuid,
+    pub id: String,
     pub username: Option<String>,
     pub email: String,
     pub first_name: String,
     pub last_name: String,
     pub is_active: bool,
-    pub session_id: Option<Uuid>,
+    pub session_id: Option<String>,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
     pub title: String,
@@ -60,7 +58,7 @@ pub struct UserDto {
 impl User {
     pub fn from_dto(dto: UserDto, password: String) -> User {
         Self {
-            id: dto.id.into(),
+            id: dto.id,
             username: dto.username.unwrap_or_default(),
             email: dto.email,
             password_hash: password,
@@ -77,6 +75,27 @@ impl User {
             secret: None,
             phone_number: dto.phone_number,
             alt_phone_number: dto.alt_phone_number,
+        }
+    }
+}
+
+impl From<User> for UserDto {
+    fn from(user: User) -> Self {
+        Self {
+            id: user.id.into(),
+            username: Some(user.username),
+            email: user.email,
+            first_name: user.first_name,
+            last_name: user.last_name,
+            is_active: user.is_active,
+            session_id: user.session_id.map(|s| s.into()),
+            created_at: user.created_at,
+            updated_at: user.updated_at,
+            title: user.title,
+            department: user.department,
+            institution: user.institution,
+            phone_number: user.phone_number,
+            alt_phone_number: user.alt_phone_number,
         }
     }
 }

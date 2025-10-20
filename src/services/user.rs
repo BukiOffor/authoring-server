@@ -1,12 +1,12 @@
 use std::sync::Arc;
 
-use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
-
 use crate::{
     DbPool,
     error::ModuleError,
     helpers::dto::{MessageDto, user::UpdateUserDto},
+    models::user::UserDto,
 };
+use diesel::*;
 
 pub fn update_user(
     user_id: String,
@@ -37,6 +37,17 @@ pub fn update_user(
         .execute(&mut conn)
         .map_err(|e| ModuleError::InternalError(e.to_string()))?;
     Ok("User updated successfully".into())
+}
+
+pub fn fetch_user(pool: Arc<DbPool>) -> Result<UserDto, ModuleError> {
+    let mut conn = pool
+        .get()
+        .map_err(|e| ModuleError::InternalError(e.to_string()))?;
+    let user = crate::schema::user::table
+        .select(crate::models::user::User::as_select())
+        .first::<crate::models::user::User>(&mut conn)
+        .map_err(|e| ModuleError::InternalError(e.to_string()))?;
+    Ok(user.into())
 }
 
 pub fn set_secret_password() {

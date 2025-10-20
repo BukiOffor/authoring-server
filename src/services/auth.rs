@@ -155,14 +155,14 @@ pub async fn populate_table(
                 .execute(conn)
                 .map_err(|e| ModuleError::InternalError(e.to_string()))?;
         }
-        for tos in task.topic_tos{
-             diesel::insert_into(schema::tos::table)
+        for tos in task.topic_tos {
+            diesel::insert_into(schema::tos::table)
                 .values(&tos)
                 .on_conflict_do_nothing()
                 .execute(conn)
                 .map_err(|e| ModuleError::InternalError(e.to_string()))?;
         }
-       
+
         Ok(())
     })?;
     Ok(())

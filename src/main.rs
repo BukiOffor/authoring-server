@@ -3,8 +3,8 @@ use std::sync::Arc;
 use authoring_server::helpers::otp::OtpManager;
 use authoring_server::{AppState, config, handlers};
 use diesel_migrations::{EmbeddedMigrations, MigrationHarness, embed_migrations};
-use reqwest::header::*;
 use reqwest::Method;
+use reqwest::header::*;
 use tower_http::{compression::CompressionLayer, trace::TraceLayer};
 use tracing::info;
 
@@ -28,7 +28,7 @@ async fn main() {
         otp_manager: OtpManager::new(5, 3),
     }
     .into();
-  let cors = tower_http::cors::CorsLayer::new()
+    let cors = tower_http::cors::CorsLayer::new()
         .allow_methods([
             Method::GET,
             Method::POST,
@@ -36,7 +36,11 @@ async fn main() {
             Method::DELETE,
             Method::PUT,
         ])
-        .allow_headers([CONTENT_TYPE, ACCESS_CONTROL_ALLOW_CREDENTIALS])
+        .allow_headers([
+            CONTENT_TYPE,
+            ACCESS_CONTROL_ALLOW_CREDENTIALS,
+            AUTHORIZATION,
+        ])
         .allow_credentials(true)
         .allow_origin([
             "http://192.168.1.177:4200".parse::<HeaderValue>().unwrap(),

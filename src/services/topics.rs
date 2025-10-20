@@ -1,17 +1,21 @@
 use std::{collections::HashMap, sync::Arc};
 
 use crate::{
-    error::ModuleError, fetch, helpers::{self, dto::topic::*}, models::tos::ToS, schema, DbConn, DbPool
+    DbConn, DbPool,
+    error::ModuleError,
+    fetch,
+    helpers::{self, dto::topic::*},
+    models::tos::ToS,
+    schema,
 };
 
 use diesel::prelude::*;
 
 pub fn fetch_subject_topics(
     subject_id: &str,
-    conn:  &mut DbConn,
+    conn: &mut DbConn,
 ) -> Result<Vec<TopicNode>, ModuleError> {
     use crate::schema::{tasks::dsl as tk, topics::dsl as t};
-
 
     let active_task = helpers::get_current_user_task(conn)?;
     if let Some(task_id) = active_task {
@@ -38,7 +42,7 @@ pub fn fetch_subtopics_under_topic(
     topic_id: &str,
     pool: Arc<DbPool>,
 ) -> Result<Vec<TopicNode>, ModuleError> {
-      let mut conn = pool
+    let mut conn = pool
         .get()
         .map_err(|e| ModuleError::InternalError(e.to_string()))?;
     let tree = fetch_subject_topics(subject_id, &mut conn)?;
@@ -53,7 +57,7 @@ pub fn fetch_subtopics_item_stats(
     topic_id: &str,
     pool: Arc<DbPool>,
 ) -> Result<TopicMetaData, ModuleError> {
-      let mut conn = pool
+    let mut conn = pool
         .get()
         .map_err(|e| ModuleError::InternalError(e.to_string()))?;
     // Get the full topic tree for the subject
@@ -72,7 +76,13 @@ pub fn fetch_subtopics_item_stats(
         None
     }
     if let Some(node) = find_node(&tree, topic_id) {
-        let tos: ToS = fetch!(schema::tos::table, schema::tos::sub_topic_id, topic_id, ToS, conn);
+        let tos: ToS = fetch!(
+            schema::tos::table,
+            schema::tos::sub_topic_id,
+            topic_id,
+            ToS,
+            conn
+        );
         Ok(TopicMetaData {
             id: node.id.clone(),
             name: node.name.clone(),
@@ -84,10 +94,12 @@ pub fn fetch_subtopics_item_stats(
             total_items_in_passage: tos.total_items_in_passage,
         })
     } else {
-        Err(ModuleError::ItemNotFound(format!("Topic {} not found", topic_id)))
+        Err(ModuleError::ItemNotFound(format!(
+            "Topic {} not found",
+            topic_id
+        )))
     }
 }
-
 
 pub fn build_hierarchy(flat_topics: Vec<FlatTopic>) -> Vec<TopicNode> {
     let mut children_by_parent: HashMap<Option<String>, Vec<FlatTopic>> = HashMap::new();

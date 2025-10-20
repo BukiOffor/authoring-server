@@ -1,7 +1,7 @@
 use crate::helpers::dto::MessageDto;
 use crate::helpers::dto::auth::Otp;
 use crate::helpers::dto::items::ItemTotalStats;
-use crate::helpers::dto::subject::ItemReadyStats;
+use crate::helpers::dto::subject::{ItemReadyStats, SubjectDashboardDto, SubjectDto};
 use crate::helpers::jwt::Claims;
 use crate::{AppState, error::ModuleError};
 use axum::routing::post;
@@ -18,6 +18,10 @@ pub fn routes(state: Arc<AppState>) -> Router {
 pub fn get_routes(state: Arc<AppState>) -> Router {
     Router::new()
         .route(
+            "/dashboard/{id}",
+            get(get_subjects_dashboard),
+        )
+        .route(
             "/stats/subject_id/{subject_id}/task/{task_id}",
             get(get_item_count_for_publishing),
         )
@@ -30,6 +34,7 @@ pub fn get_routes(state: Arc<AppState>) -> Router {
             "/total/stats/subject_id/{subject_id}",
             get(get_item_stats_for_subject),
         )
+        .route("/get", get(get_subjects))
         .with_state(state)
 }
 
@@ -86,4 +91,20 @@ pub async fn get_item_stats_for_subject(
     let response =
         crate::services::subject::get_item_stats_for_subject(subject_id, state.pool.clone())?;
     Ok(Json(response))
+}
+
+pub async fn get_subjects(
+    State(state): State<Arc<AppState>>,
+) -> Result<Json<Vec<SubjectDto>>, ModuleError> {
+    let response = crate::services::subject::get_subjects(state.pool.clone())?;
+    Ok(Json(response))
+}
+
+pub async fn get_subjects_dashboard(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<String>,
+) -> Result<Json<SubjectDashboardDto>, ModuleError> {
+    let subjects_dashboard =
+        crate::services::subject::get_subjects_dashboard(state.pool.clone(), id)?;
+    Ok(Json(subjects_dashboard))
 }

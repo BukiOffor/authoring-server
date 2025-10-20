@@ -33,12 +33,12 @@ pub struct Claims {
 
 pub async fn generate_token(payload: JwtPayloadDto) -> Result<Json<AuthBodyDto>, ModuleError> {
     let expiration = Utc::now()
-        .checked_add_signed(chrono::Duration::minutes(100))
+        .checked_add_signed(chrono::Duration::minutes(5000))
         .expect("valid timestamp")
         .timestamp() as usize;
 
     let refresh_expiration = Utc::now()
-        .checked_add_signed(chrono::Duration::minutes(120))
+        .checked_add_signed(chrono::Duration::minutes(5000))
         .expect("valid timestamp")
         .timestamp() as usize;
 

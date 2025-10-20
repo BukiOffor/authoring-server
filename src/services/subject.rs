@@ -108,7 +108,6 @@ pub async fn publish_items(
     Ok("Items published successfully".into())
 }
 
-
 pub fn build_items_for_publishing(
     subject_id: &str,
     task_id: &str,
@@ -260,4 +259,52 @@ pub fn get_item_stats_for_subject(
         .map_err(|e| ModuleError::InternalError(e.to_string()))?;
 
     Ok(stats)
+}
+
+pub fn get_subjects(pool: Arc<DbPool>) -> Result<Vec<SubjectDto>, ModuleError> {
+    let mut conn = pool
+        .get()
+        .map_err(|e| ModuleError::InternalError(e.to_string()))?;
+
+    let subjects = tasks::table
+        .select((tasks::subject_id, tasks::subject_name, tasks::subject_code))
+        .distinct()
+        .load::<(String, String, String)>(&mut conn)
+        .map_err(|e| ModuleError::InternalError(e.to_string()))?
+        .into_iter()
+        .map(|(id, name, code)| SubjectDto { id, name, code })
+        .collect();
+
+    Ok(subjects)
+}
+
+pub fn get_subjects_dashboard(
+    pool: Arc<DbPool>,
+    id: String,
+) -> Result<SubjectDashboardDto, ModuleError> {
+    let mut conn = pool
+        .get()
+        .map_err(|e| ModuleError::InternalError(e.to_string()))?;
+
+    let query = r#"
+        SELECT t.subject_id AS id,
+               t.subject_name AS name,
+               t.subject_code AS code,
+               COALESCE(SUM(CASE WHEN i.status = 'Draft' THEN 1 ELSE 0 END), 0) AS draft,
+               COALESCE(SUM(CASE WHEN i.status = 'Submitted' THEN 1 ELSE 0 END), 0) AS submitted,
+               COALESCE(COUNT(i.id), 0) AS total_items
+        FROM (
+            SELECT DISTINCT subject_id, subject_name, subject_code
+            FROM tasks
+        ) t
+        LEFT JOIN items i ON t.subject_id = i.subject_id
+        WHERE t.subject_id = ?
+        GROUP BY t.subject_id, t.subject_name, t.subject_code
+    "#;
+    let subjects_dashboard = diesel::sql_query(query)
+        .bind::<diesel::sql_types::Text, _>(id)
+        .get_result::<SubjectDashboardDto>(&mut conn)
+        .map_err(|e| ModuleError::InternalError(e.to_string()))?;
+
+    Ok(subjects_dashboard)
 }

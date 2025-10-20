@@ -334,7 +334,6 @@ pub mod items {
         pub task_id: Uuid,
     }
 
-
     #[derive(Debug, Clone, Serialize, Deserialize)]
     pub struct CreateOptions {
         pub position: i32,
@@ -498,6 +497,28 @@ pub mod subject {
         pub expected: i32,
         #[diesel(sql_type = BigInt)]
         pub ready: i64,
+    }
+
+    #[derive(Debug, Serialize, Deserialize)]
+    pub struct SubjectDto {
+        pub id: String,
+        pub name: String,
+        pub code: String,
+    }
+    #[derive(Debug, QueryableByName, Serialize, Deserialize)]
+    pub struct SubjectDashboardDto {
+        #[diesel(sql_type = Text)]
+        pub id: String,
+        #[diesel(sql_type = Text)]
+        pub name: String,
+        #[diesel(sql_type = Text)]
+        pub code: String,
+        #[diesel(sql_type = BigInt)]
+        pub draft: i64,
+        #[diesel(sql_type = BigInt)]
+        pub submitted: i64,
+        #[diesel(sql_type = BigInt)]
+        pub total_items: i64,
     }
 }
 

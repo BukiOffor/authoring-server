@@ -116,13 +116,7 @@ macro_rules! fetch {
             .select(<$return_type>::as_select())
             .first(&mut $conn)
             .optional()
-            .map_err(|e| {
-                ModuleError::InternalError(format!(
-                    "Error fetching {}: {}",
-                    $value,
-                    e
-                ))
-            })?
+            .map_err(|e| ModuleError::InternalError(format!("Error fetching {}: {}", $value, e)))?
             .ok_or(ModuleError::ItemNotFound(format!(
                 "{} not found in system",
                 $value

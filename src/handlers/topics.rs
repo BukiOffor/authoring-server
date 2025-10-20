@@ -13,7 +13,10 @@ pub fn routes(state: Arc<AppState>) -> Router {
 pub fn get_routes(state: Arc<AppState>) -> Router {
     Router::new()
         .route("/subject/{subject_id}", get(fetch_subject_topics))
-        .route("/subject/{subject_id}/topic/{topic_id}/item_count", get(fetch_subtopics_item_count))
+        .route(
+            "/subject/{subject_id}/topic/{topic_id}/item_count",
+            get(fetch_subtopics_item_count),
+        )
         .route(
             "/subject/{subject_id}/topic/{topic_id}/subtopic",
             get(fetch_subtopics_under_topic),
@@ -25,7 +28,8 @@ pub async fn fetch_subject_topics(
     State(state): State<Arc<AppState>>,
     Path(subject_id): Path<String>,
 ) -> Result<Json<Vec<TopicNode>>, ModuleError> {
-      let mut conn = state.pool
+    let mut conn = state
+        .pool
         .get()
         .map_err(|e| ModuleError::InternalError(e.to_string()))?;
     let response = crate::services::topics::fetch_subject_topics(&subject_id, &mut conn)?;
