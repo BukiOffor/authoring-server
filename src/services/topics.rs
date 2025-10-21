@@ -20,9 +20,14 @@ pub fn fetch_subject_topics(
     let active_task = helpers::get_current_user_task(conn)?;
     if let Some(task_id) = active_task {
         let flat_topics = t::topics
-            .left_join(tk::tasks.on(tk::topic_id.eq(t::id).and(tk::subject_id.eq(t::subject_id))))
+            .left_join(
+                tk::tasks.on(tk::topic_id
+                    .eq(t::id)
+                    .and(tk::subject_id.eq(t::subject_id))
+                    .and(tk::task_id.eq(&task_id))),
+            )
             .filter(t::subject_id.eq(subject_id))
-            .filter(tk::task_id.eq(task_id))
+            .filter(t::archived.eq(false))
             .select((
                 t::id,
                 t::name,
@@ -33,7 +38,6 @@ pub fn fetch_subject_topics(
             .load::<FlatTopic>(conn)?;
         return Ok(build_hierarchy(flat_topics));
     }
-
     Ok(vec![])
 }
 
@@ -48,6 +52,40 @@ pub fn fetch_subtopics_under_topic(
     let tree = fetch_subject_topics(subject_id, &mut conn)?;
     if let Some(subs) = tree.iter().find_map(|t| t.find_subtopics(topic_id)) {
         return Ok(subs);
+    }
+    Ok(vec![])
+}
+pub fn fetch_subtopics_under_topic_with_metadata(
+    subject_id: &str,
+    topic_id: &str,
+    pool: Arc<DbPool>,
+) -> Result<Vec<SubTopicWithMetadata>, ModuleError> {
+    let mut conn = pool
+        .get()
+        .map_err(|e| ModuleError::InternalError(e.to_string()))?;
+    let tree = fetch_subject_topics(subject_id, &mut conn)?;
+    if let Some(subs) = tree.iter().find_map(|t| t.find_subtopics(topic_id)) {
+        let mut subtopics = Vec::new();
+        for sub_topic in subs {
+            let id = sub_topic.id.clone();
+            let tos: ToS = fetch!(
+                schema::tos::table,
+                schema::tos::sub_topic_id,
+                id.clone(),
+                ToS,
+                conn
+            );
+            let num_of_items_created = schema::items::table
+                .filter(schema::items::topic_id.eq(id.clone()))
+                .count()
+                .get_result::<i64>(&mut conn)?;
+            subtopics.push(SubTopicWithMetadata::from(
+                sub_topic,
+                tos,
+                num_of_items_created as i32,
+            ));
+        }
+        return Ok(subtopics);
     }
     Ok(vec![])
 }

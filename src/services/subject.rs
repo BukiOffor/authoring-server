@@ -290,8 +290,8 @@ pub fn get_subjects_dashboard(
         SELECT t.subject_id AS id,
                t.subject_name AS name,
                t.subject_code AS code,
-               COALESCE(SUM(CASE WHEN i.status = 'Draft' THEN 1 ELSE 0 END), 0) AS draft,
-               COALESCE(SUM(CASE WHEN i.status = 'Submitted' THEN 1 ELSE 0 END), 0) AS submitted,
+               COALESCE(SUM(CASE WHEN i.status = '"Draft"' THEN 1 ELSE 0 END), 0) AS draft,
+               COALESCE(SUM(CASE WHEN i.status = '"Submitted"' THEN 1 ELSE 0 END), 0) AS submitted,
                COALESCE(COUNT(i.id), 0) AS total_items
         FROM (
             SELECT DISTINCT subject_id, subject_name, subject_code

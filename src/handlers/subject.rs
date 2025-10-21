@@ -17,10 +17,7 @@ pub fn routes(state: Arc<AppState>) -> Router {
 
 pub fn get_routes(state: Arc<AppState>) -> Router {
     Router::new()
-        .route(
-            "/dashboard/{id}",
-            get(get_subjects_dashboard),
-        )
+        .route("/dashboard/{id}", get(get_subjects_dashboard))
         .route(
             "/stats/subject_id/{subject_id}/task/{task_id}",
             get(get_item_count_for_publishing),

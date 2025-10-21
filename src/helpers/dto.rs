@@ -165,6 +165,8 @@ pub mod tasks {
 }
 
 pub mod topic {
+    use crate::models::tos::ToS;
+
     use super::*;
     #[derive(Queryable, Debug)]
     pub struct FlatTopic {
@@ -208,6 +210,32 @@ pub mod topic {
                 }
             }
             None
+        }
+    }
+    #[derive(Debug, Serialize, Deserialize, Clone)]
+    pub struct SubTopicWithMetadata {
+        pub id: String,
+        pub name: String,
+        pub num_of_items_created: i32,
+        pub expected_number_of_items: i64,
+        pub task_id: Option<String>,
+        pub item_type: ItemType,
+        pub number_of_passages: i32,
+        pub total_items_in_passage: i32,
+    }
+
+    impl SubTopicWithMetadata {
+        pub fn from(value: TopicNode, tos: ToS, num_of_items_created: i32) -> Self {
+            Self {
+                id: value.id,
+                name: value.name,
+                num_of_items_created,
+                expected_number_of_items: value.num_of_questions.unwrap_or(0) as i64,
+                task_id: value.task_id,
+                item_type: tos.item_type,
+                number_of_passages: tos.number_of_passages,
+                total_items_in_passage: tos.total_items_in_passage,
+            }
         }
     }
 }

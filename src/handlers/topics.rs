@@ -1,4 +1,4 @@
-use crate::helpers::dto::topic::TopicMetaData;
+use crate::helpers::dto::topic::{SubTopicWithMetadata, TopicMetaData};
 use crate::{AppState, error::ModuleError, helpers::dto::topic::TopicNode};
 use axum::{Json, extract::State};
 use axum::{Router, extract::Path, routing::get};
@@ -20,6 +20,10 @@ pub fn get_routes(state: Arc<AppState>) -> Router {
         .route(
             "/subject/{subject_id}/topic/{topic_id}/subtopic",
             get(fetch_subtopics_under_topic),
+        )
+        .route(
+            "/subject/{subject_id}/topic/{topic_id}/metadata",
+            get(fetch_subtopics_under_topic_with_metadata),
         )
         .with_state(state)
 }
@@ -53,6 +57,18 @@ pub async fn fetch_subtopics_item_count(
     Path((subject_id, topic_id)): Path<(String, String)>,
 ) -> Result<Json<TopicMetaData>, ModuleError> {
     let response = crate::services::topics::fetch_subtopics_item_stats(
+        &subject_id,
+        &topic_id,
+        state.pool.clone(),
+    )?;
+    Ok(Json(response))
+}
+
+pub async fn fetch_subtopics_under_topic_with_metadata(
+    State(state): State<Arc<AppState>>,
+    Path((subject_id, topic_id)): Path<(String, String)>,
+) -> Result<Json<Vec<SubTopicWithMetadata>>, ModuleError> {
+    let response = crate::services::topics::fetch_subtopics_under_topic_with_metadata(
         &subject_id,
         &topic_id,
         state.pool.clone(),
