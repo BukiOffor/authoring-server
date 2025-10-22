@@ -18,7 +18,7 @@ pub const GET_SUBJECT_ITEM_TOTAL_STATS: &str = r#"
 SELECT
     t.id AS topic_id,
     t.name AS topic_name,
-    COALESCE(SUM(ts.num_of_questions), 0) AS expected_items,
+    COALESCE(ts.num_of_questions, 0) AS expected_items,
     COUNT(i.id) FILTER (WHERE i.status = '"Draft"') AS items_in_draft,
     COUNT(i.id) FILTER (WHERE i.status = '"Ready"') AS ready_items,
     COUNT(i.id) FILTER (WHERE i.status = '"Submitted"') AS submitted_items

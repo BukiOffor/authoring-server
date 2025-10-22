@@ -321,6 +321,7 @@ pub mod items {
     }
 
     impl PassageDto {
+        /// converts the PassageDto into a PassageWithItems struct
         pub fn build(&self) -> PassageWithItems {
             let passage = self.build_passage();
             let mut items: Vec<ItemWithOptions> = self
