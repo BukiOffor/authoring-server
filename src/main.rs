@@ -40,6 +40,8 @@ async fn main() {
             CONTENT_TYPE,
             ACCESS_CONTROL_ALLOW_CREDENTIALS,
             AUTHORIZATION,
+            ACCESS_CONTROL_ALLOW_ORIGIN,
+            ACCESS_CONTROL_ALLOW_HEADERS,            
         ])
         .allow_credentials(true)
         .allow_origin([

@@ -54,6 +54,11 @@ pub struct UserDto {
     pub phone_number: Option<String>,
     pub alt_phone_number: Option<String>,
 }
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct UserWithTask {
+    pub user: UserDto,
+    pub task_id: String,
+}
 
 impl User {
     pub fn from_dto(dto: UserDto, password: String) -> User {

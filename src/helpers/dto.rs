@@ -9,7 +9,12 @@ use uuid::Uuid;
 pub struct MessageDto {
     pub message: String,
 }
-
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ItemCreatedResponse {
+    pub number_of_items_created: i64,
+    pub topic_id: String,
+    pub message: String,
+}
 impl From<&str> for MessageDto {
     fn from(value: &str) -> Self {
         MessageDto {
@@ -285,6 +290,7 @@ pub mod items {
         pub submitted_items: i64,
     }
 
+    #[derive(Debug, Clone, Serialize, Deserialize)]
     pub struct ItemWithOptions {
         pub item: Items,
         pub options: Vec<ItemOptions>,
@@ -506,7 +512,7 @@ pub mod subject {
         pub question_type: ItemType,
         pub subject_id: String,
         pub topic_id: String,
-        pub title: String,
+        pub title: String, // is the instruction for the item
         pub text: String,
         pub difficulty: i16,
         pub taxonomy: Taxonomy,

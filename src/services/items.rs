@@ -1,3 +1,4 @@
+use crate::helpers::dto::ItemCreatedResponse;
 use crate::models::item::ItemStatus;
 use crate::{
     DbPool,
@@ -21,18 +22,35 @@ pub fn create_item(
     pool: Arc<DbPool>,
     item: Items,
     options: Vec<ItemOptions>,
-) -> Result<MessageDto, ModuleError> {
+) -> Result<ItemCreatedResponse, ModuleError> {
     let mut conn = pool
         .get()
         .map_err(|e| ModuleError::InternalError(e.to_string()))?;
 
+    if options.len() != 4 {
+        return Err(ModuleError::Error("Number of options must be 4".to_string()));
+    }
+    let mut is_answer_found = false;
+    for option in options.iter() {
+        if option.is_answer {
+            is_answer_found = true;
+            break;
+        }
+    }
+    if !is_answer_found {
+        return Err(ModuleError::Error("Option is answer must be true".to_string()));
+    }
     conn.transaction::<_, ModuleError, _>(|conn| {
         insert!(items::table, item, conn);
         insert!(item_options::table, options, conn);
         Ok(())
     })?;
 
-    Ok(MessageDto {
+    let number_of_items_created = items::table.filter(items::topic_id.eq(item.topic_id.clone())).count().get_result::<i64>(&mut conn)?;
+
+    Ok(ItemCreatedResponse {
+        number_of_items_created,
+        topic_id: item.topic_id.clone(),
         message: "Item has been created successfully".to_string(),
     })
 }
@@ -108,17 +126,36 @@ pub fn update_item(
 pub fn create_passage_and_items(
     pool: Arc<DbPool>,
     payload: PassageWithItems,
-) -> Result<MessageDto, ModuleError> {
+) -> Result<ItemCreatedResponse, ModuleError> {
     let mut conn = pool
         .get()
         .map_err(|e| ModuleError::InternalError(e.to_string()))?;
 
     let passage = payload.passage;
+    let topic_id = passage.topic_id.clone();
+    let items = payload.items.clone();
+
+    for item in items {
+        if item.options.len() != 4 {
+            return Err(ModuleError::Error("Number of options must be 4".to_string()));
+        }
+        let mut is_answer_found = false;
+        for option in item.options.iter() {
+            if option.is_answer {
+                is_answer_found = true;
+                break;
+            }
+        }
+        if !is_answer_found {
+            return Err(ModuleError::Error("Option is answer must be true".to_string()));
+        }
+    }
     conn.transaction::<_, ModuleError, _>(|conn| {
         insert!(crate::schema::passages::table, passage, conn);
 
         for item_payload in payload.items {
             let item = item_payload.item;
+            
             insert!(items::table, item, conn);
             for option in item_payload.options {
                 insert!(item_options::table, option, conn);
@@ -127,7 +164,12 @@ pub fn create_passage_and_items(
 
         Ok(())
     })?;
-    Ok("Items has been created successfully".into())
+    let number_of_items_created = items::table.filter(items::topic_id.eq(&topic_id)).count().get_result::<i64>(&mut conn)?;
+    Ok(ItemCreatedResponse {
+        number_of_items_created,
+        topic_id,
+        message: "Items has been created successfully".to_string(),
+    })
 }
 
 pub fn fetch_item_stats(subject_id: &str, pool: Arc<DbPool>) -> Result<ItemStats, ModuleError> {

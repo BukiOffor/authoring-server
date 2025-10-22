@@ -101,7 +101,7 @@ pub struct Items {
     pub topic_id: String,
     pub question_type: ItemType,
     pub text: String,
-    pub title: String,
+    pub title: String, // is the instruction or rubric for the item
     pub difficulty: i16,
     pub status: ItemStatus,
     pub created_at: NaiveDateTime,

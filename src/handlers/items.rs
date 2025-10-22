@@ -1,4 +1,4 @@
-use crate::helpers::dto::MessageDto;
+use crate::helpers::dto::{ItemCreatedResponse, MessageDto};
 use crate::helpers::dto::items::display::TopicItemsDto;
 use crate::helpers::dto::items::*;
 use crate::models::item::ItemStatus;
@@ -40,7 +40,7 @@ pub async fn fetch_item_stats(
 pub async fn create_item(
     State(state): State<Arc<AppState>>,
     Json(payload): Json<CreateItemDto>,
-) -> Result<Json<MessageDto>, ModuleError> {
+) -> Result<Json<ItemCreatedResponse>, ModuleError> {
     let item: ItemWithOptions = payload.into();
     let response =
         crate::services::items::create_item(state.pool.clone(), item.item, item.options)?;
@@ -50,7 +50,7 @@ pub async fn create_item(
 pub async fn create_passage_and_items(
     State(state): State<Arc<AppState>>,
     Json(payload): Json<PassageDto>,
-) -> Result<Json<MessageDto>, ModuleError> {
+) -> Result<Json<ItemCreatedResponse>, ModuleError> {
     let response =
         crate::services::items::create_passage_and_items(state.pool.clone(), payload.build())?;
     Ok(Json(response))
