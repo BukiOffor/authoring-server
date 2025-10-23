@@ -1,4 +1,5 @@
 use crate::error::ErrorMessage;
+use crate::helpers::dto::pagination::{PaginatedResult, Pagination};
 use crate::helpers::dto::MessageDto;
 use crate::helpers::dto::auth::Otp;
 use crate::helpers::dto::items::{ItemTotalStats, Options};
@@ -28,14 +29,14 @@ pub fn get_item_count_for_publishing(
     let task_id = helpers::get_current_user_task(&mut conn)?;
 
     if let Some(task_id) = task_id {
-           let query = diesel::sql_query(crate::helpers::querys::GET_SUBJECT_ITEM_READY_DETAILS);
-    let stats: Vec<ItemReadyStats> = query
-        .bind::<diesel::sql_types::Text, _>(subject_id)
-        .bind::<diesel::sql_types::Text, _>(task_id)
-        .load(&mut conn)
-        .map_err(|e| ModuleError::InternalError(e.to_string()))?;
+        let query = diesel::sql_query(crate::helpers::querys::GET_SUBJECT_ITEM_READY_DETAILS);
+        let stats: Vec<ItemReadyStats> = query
+            .bind::<diesel::sql_types::Text, _>(subject_id)
+            .bind::<diesel::sql_types::Text, _>(task_id)
+            .load(&mut conn)
+            .map_err(|e| ModuleError::InternalError(e.to_string()))?;
 
-    Ok(stats)
+        Ok(stats)
     } else {
         Err(ModuleError::Error(
             "Task Id could not be fetched".to_string(),
@@ -254,18 +255,28 @@ pub async fn send_otp(
 
 pub fn get_item_stats_for_subject(
     subject_id: String,
+    pagination: Pagination,
     pool: Arc<DbPool>,
-) -> Result<Vec<ItemTotalStats>, ModuleError> {
+) -> Result<PaginatedResult<ItemTotalStats>, ModuleError> {
     let mut conn = pool
         .get()
         .map_err(|e| ModuleError::InternalError(e.to_string()))?;
 
-    let stats = diesel::sql_query(querys::GET_SUBJECT_ITEM_TOTAL_STATS.to_string())
-        .bind::<diesel::sql_types::Text, _>(subject_id)
+    let items = diesel::sql_query(querys::GET_SUBJECT_ITEM_TOTAL_STATS.to_string())
+        .bind::<diesel::sql_types::Text, _>(subject_id.clone())
+        .bind::<diesel::sql_types::Integer, _>(pagination.size)
+        .bind::<diesel::sql_types::Integer, _>(pagination.offset())
         .load::<ItemTotalStats>(&mut conn)
         .map_err(|e| ModuleError::InternalError(e.to_string()))?;
 
-    Ok(stats)
+    let count = diesel::sql_query(querys::GET_SUBJECT_ITEM_TOTAL_STATS.to_string())
+        .bind::<diesel::sql_types::Text, _>(subject_id)
+        .get_results::<ItemTotalStats>(&mut conn)
+        .iter().count();
+
+    let result = PaginatedResult::new(items, count, pagination);
+
+    Ok(result)
 }
 
 pub fn get_subjects(pool: Arc<DbPool>) -> Result<Vec<SubjectDto>, ModuleError> {

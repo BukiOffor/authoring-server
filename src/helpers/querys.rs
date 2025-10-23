@@ -33,5 +33,6 @@ LEFT JOIN items i
 WHERE t.subject_id = $1
 
 GROUP BY t.id, t.name
-ORDER BY t.name;
+ORDER BY t.name
+LIMIT $2 OFFSET $3;
 "#;

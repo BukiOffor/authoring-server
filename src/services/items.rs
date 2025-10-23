@@ -28,7 +28,9 @@ pub fn create_item(
         .map_err(|e| ModuleError::InternalError(e.to_string()))?;
 
     if options.len() != 4 {
-        return Err(ModuleError::Error("Number of options must be 4".to_string()));
+        return Err(ModuleError::Error(
+            "Number of options must be 4".to_string(),
+        ));
     }
     let mut is_answer_found = false;
     for option in options.iter() {
@@ -38,7 +40,9 @@ pub fn create_item(
         }
     }
     if !is_answer_found {
-        return Err(ModuleError::Error("Option is answer must be true".to_string()));
+        return Err(ModuleError::Error(
+            "Option is answer must be true".to_string(),
+        ));
     }
     conn.transaction::<_, ModuleError, _>(|conn| {
         insert!(items::table, item, conn);
@@ -46,7 +50,10 @@ pub fn create_item(
         Ok(())
     })?;
 
-    let number_of_items_created = items::table.filter(items::topic_id.eq(item.topic_id.clone())).count().get_result::<i64>(&mut conn)?;
+    let number_of_items_created = items::table
+        .filter(items::topic_id.eq(item.topic_id.clone()))
+        .count()
+        .get_result::<i64>(&mut conn)?;
 
     Ok(ItemCreatedResponse {
         number_of_items_created,
@@ -137,7 +144,9 @@ pub fn create_passage_and_items(
 
     for item in items {
         if item.options.len() != 4 {
-            return Err(ModuleError::Error("Number of options must be 4".to_string()));
+            return Err(ModuleError::Error(
+                "Number of options must be 4".to_string(),
+            ));
         }
         let mut is_answer_found = false;
         for option in item.options.iter() {
@@ -147,7 +156,9 @@ pub fn create_passage_and_items(
             }
         }
         if !is_answer_found {
-            return Err(ModuleError::Error("Option is answer must be true".to_string()));
+            return Err(ModuleError::Error(
+                "Option is answer must be true".to_string(),
+            ));
         }
     }
     conn.transaction::<_, ModuleError, _>(|conn| {
@@ -155,7 +166,7 @@ pub fn create_passage_and_items(
 
         for item_payload in payload.items {
             let item = item_payload.item;
-            
+
             insert!(items::table, item, conn);
             for option in item_payload.options {
                 insert!(item_options::table, option, conn);
@@ -164,7 +175,10 @@ pub fn create_passage_and_items(
 
         Ok(())
     })?;
-    let number_of_items_created = items::table.filter(items::topic_id.eq(&topic_id)).count().get_result::<i64>(&mut conn)?;
+    let number_of_items_created = items::table
+        .filter(items::topic_id.eq(&topic_id))
+        .count()
+        .get_result::<i64>(&mut conn)?;
     Ok(ItemCreatedResponse {
         number_of_items_created,
         topic_id,

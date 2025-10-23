@@ -1,9 +1,11 @@
+use crate::helpers::dto::pagination::{PaginatedResult, Pagination};
 use crate::helpers::dto::MessageDto;
 use crate::helpers::dto::auth::Otp;
 use crate::helpers::dto::items::ItemTotalStats;
 use crate::helpers::dto::subject::{ItemReadyStats, SubjectDashboardDto, SubjectDto};
 use crate::helpers::jwt::Claims;
 use crate::{AppState, error::ModuleError};
+use axum::extract::Query;
 use axum::routing::post;
 use axum::{Json, extract::State};
 use axum::{Router, extract::Path, routing::get};
@@ -19,7 +21,7 @@ pub fn get_routes(state: Arc<AppState>) -> Router {
     Router::new()
         .route("/dashboard/{id}", get(get_subjects_dashboard))
         .route(
-            "/stats/subject_id/{subject_id}/task/{task_id}",
+            "/stats/publish/{subject_id}",
             get(get_item_count_for_publishing),
         )
         .route("/publish/otp/send/{subject_id}", post(send_otp))
@@ -39,10 +41,8 @@ pub async fn get_item_count_for_publishing(
     State(state): State<Arc<AppState>>,
     Path(subject_id): Path<String>,
 ) -> Result<Json<Vec<ItemReadyStats>>, ModuleError> {
-    let response = crate::services::subject::get_item_count_for_publishing(
-        &subject_id,
-        state.pool.clone(),
-    )?;
+    let response =
+        crate::services::subject::get_item_count_for_publishing(&subject_id, state.pool.clone())?;
     Ok(Json(response))
 }
 
@@ -83,9 +83,10 @@ pub async fn send_otp(
 pub async fn get_item_stats_for_subject(
     State(state): State<Arc<AppState>>,
     Path(subject_id): Path<String>,
-) -> Result<Json<Vec<ItemTotalStats>>, ModuleError> {
+    Query(pagination) : Query<Pagination>
+) -> Result<Json<PaginatedResult<ItemTotalStats>>, ModuleError> {
     let response =
-        crate::services::subject::get_item_stats_for_subject(subject_id, state.pool.clone())?;
+        crate::services::subject::get_item_stats_for_subject(subject_id, pagination, state.pool.clone())?;
     Ok(Json(response))
 }
 

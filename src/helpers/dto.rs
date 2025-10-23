@@ -571,3 +571,54 @@ pub mod user {
         pub alt_phone_number: String,
     }
 }
+
+pub mod pagination {
+    use super::*;
+    #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+    pub struct Pagination {
+        #[serde(default = "default_page")]
+        pub page: i32,
+        #[serde(default = "default_page_size")]
+        pub size: i32,
+    }
+
+    fn default_page() -> i32 {
+        1
+    }
+    fn default_page_size() -> i32 {
+        10
+    }
+
+    impl Pagination {
+        pub fn offset(&self) -> i32 {
+            (self.page - 1) * self.size
+        }
+    }
+
+    #[derive(Serialize, Deserialize, Default)]
+    pub struct PaginatedResult<T> {
+        pub items: Vec<T>,
+        pub metadata: Metadata,
+    }
+
+    #[derive(Serialize, Deserialize, Default)]
+    pub struct Metadata {
+        pub page: i32,
+        pub size: i32,
+        pub total_items: usize,
+        pub num_pages: i32,
+    }
+
+    impl<T> PaginatedResult<T> {
+        pub fn new(items: Vec<T>, total_items: usize, pagination: Pagination) -> Self {
+            let metadata = Metadata {
+                page: pagination.page,
+                size: pagination.size,
+                total_items,
+                num_pages: (total_items as f64 / pagination.size as f64).ceil() as i32,
+            };
+            Self { items, metadata }
+        }
+    }
+
+}
