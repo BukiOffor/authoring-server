@@ -19,14 +19,16 @@ use std::sync::Arc;
 
 pub fn get_item_count_for_publishing(
     subject_id: &str,
-    task_id: &str,
     pool: Arc<DbPool>,
 ) -> Result<Vec<ItemReadyStats>, ModuleError> {
     let mut conn = pool
         .get()
         .map_err(|e| ModuleError::InternalError(e.to_string()))?;
 
-    let query = diesel::sql_query(crate::helpers::querys::GET_SUBJECT_ITEM_READY_DETAILS);
+    let task_id = helpers::get_current_user_task(&mut conn)?;
+
+    if let Some(task_id) = task_id {
+           let query = diesel::sql_query(crate::helpers::querys::GET_SUBJECT_ITEM_READY_DETAILS);
     let stats: Vec<ItemReadyStats> = query
         .bind::<diesel::sql_types::Text, _>(subject_id)
         .bind::<diesel::sql_types::Text, _>(task_id)
@@ -34,6 +36,11 @@ pub fn get_item_count_for_publishing(
         .map_err(|e| ModuleError::InternalError(e.to_string()))?;
 
     Ok(stats)
+    } else {
+        Err(ModuleError::Error(
+            "Task Id could not be fetched".to_string(),
+        ))
+    }
 }
 
 pub async fn publish_items(

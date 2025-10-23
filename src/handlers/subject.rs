@@ -37,11 +37,10 @@ pub fn get_routes(state: Arc<AppState>) -> Router {
 
 pub async fn get_item_count_for_publishing(
     State(state): State<Arc<AppState>>,
-    Path((subject_id, task_id)): Path<(String, String)>,
+    Path(subject_id): Path<String>,
 ) -> Result<Json<Vec<ItemReadyStats>>, ModuleError> {
     let response = crate::services::subject::get_item_count_for_publishing(
         &subject_id,
-        &task_id,
         state.pool.clone(),
     )?;
     Ok(Json(response))
