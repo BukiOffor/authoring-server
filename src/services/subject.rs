@@ -271,10 +271,11 @@ pub fn get_item_stats_for_subject(
 
     let count = diesel::sql_query(querys::GET_SUBJECT_ITEM_TOTAL_STATS.to_string())
         .bind::<diesel::sql_types::Text, _>(subject_id)
-        .get_results::<ItemTotalStats>(&mut conn)
-        .iter().count();
-
-    let result = PaginatedResult::new(items, count, pagination);
+        .bind::<diesel::sql_types::Integer, _>(i32::MAX)
+        .bind::<diesel::sql_types::Integer, _>(0)
+        .load::<ItemTotalStats>(&mut conn)
+        .map_err(|e| ModuleError::InternalError(e.to_string()))?;
+    let result = PaginatedResult::new(items, count.len(), pagination);
 
     Ok(result)
 }
