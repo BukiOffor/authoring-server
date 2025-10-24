@@ -46,7 +46,6 @@ pub fn get_item_count_for_publishing(
 
 pub async fn publish_items(
     subject_id: &str,
-    task_id: &str,
     payload: Otp,
     pool: Arc<DbPool>,
     otp_manager: &OtpManager,
@@ -57,6 +56,12 @@ pub async fn publish_items(
         .get()
         .map_err(|e| ModuleError::InternalError(e.to_string()))?;
 
+    let current_task = helpers::get_current_user_task(&mut conn)?;
+    if current_task.is_none(){
+        return Err(ModuleError::Error("Task Id could not be fetched".to_string()));
+    }
+
+    let task_id = current_task.unwrap();
     let user: User = fetch!(user::table, user::id, payload.user_id.clone(), User, conn);
 
     if !helpers::password_verfier(&payload.secret, &user.password_hash) {
@@ -65,8 +70,8 @@ pub async fn publish_items(
         ));
     }
     let is_verified = otp_manager.verify_otp(&format!("publish_{}", subject_id), &payload.code);
-    if !is_verified {
-        return Err(ModuleError::InvalidOtp);
+    if !is_verified.0 {
+        return Err(ModuleError::InvalidOtp(is_verified.1));
     }
     let client = Client::builder()
         .cookie_store(true)
@@ -83,7 +88,7 @@ pub async fn publish_items(
         .map(|server| format!("{}/author/accept", server))
         .map_err(|e| ModuleError::Error(e.to_string()))?;
 
-    let items_to_send = build_items_for_publishing(subject_id, task_id, &mut conn)?;
+    let items_to_send = build_items_for_publishing(subject_id, &task_id, &mut conn)?;
 
     let server_response = client
         .post(url)

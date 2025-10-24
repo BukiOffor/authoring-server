@@ -25,7 +25,7 @@ async fn main() {
     });
     let state: Arc<AppState> = AppState {
         pool,
-        otp_manager: OtpManager::new(5, 3),
+        otp_manager: OtpManager::new(10, 3),
     }
     .into();
     let cors = tower_http::cors::CorsLayer::new()

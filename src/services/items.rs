@@ -322,6 +322,7 @@ pub fn fetch_topic_items_with_subtopics(
             question_type: format!("{:?}", item.question_type),
             difficulty: item.difficulty,
             status: format!("{:?}", item.status),
+            date: item.created_at,
             options: options_dto,
         };
 

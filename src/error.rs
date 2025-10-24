@@ -39,8 +39,9 @@ pub enum ModuleError {
 
     #[error("{0}")]
     ConversionError(String),
-    #[error("Incorrect OTP")]
-    InvalidOtp,
+
+    #[error("{0}")]
+    InvalidOtp(&'static str),
 }
 
 #[derive(Debug, Error, Serialize, Deserialize)]
@@ -76,7 +77,7 @@ impl ErrorMessage {
 impl IntoResponse for ModuleError {
     fn into_response(self) -> axum::response::Response {
         match self {
-            Self::InvalidToken | Self::InvalidOtp => {
+            Self::InvalidToken | Self::InvalidOtp(_) => {
                 let message = ErrorMessage::default().build(self.to_string(), 401);
                 (axum::http::StatusCode::UNAUTHORIZED, axum::Json(message)).into_response()
             }

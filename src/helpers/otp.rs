@@ -41,33 +41,33 @@ impl OtpManager {
         code
     }
 
-    pub fn verify_otp(&self, identifier: &str, code: &str) -> bool {
+    pub fn verify_otp(&self, identifier: &str, code: &str) -> (bool, &'static str) {
         let mut storage = self.storage.write().unwrap();
 
         if let Some(otp_data) = storage.get_mut(identifier) {
             // Check expiration
             if Instant::now() > otp_data.expires_at {
                 storage.remove(identifier);
-                return false;
+                return (false, "OTP has expired");
             }
 
             // Check attempts
             if otp_data.attempts >= self.max_attempts {
                 storage.remove(identifier);
-                return false;
+                return (false, "Maximum number of attempts reached");
             }
 
             otp_data.attempts += 1;
 
             if otp_data.code == code {
                 storage.remove(identifier);
-                return true;
+                return (true, "");
             }
 
-            return false;
+            return (false, "Incorrect OTP");
         }
 
-        false
+        (false, "Incorrect OTP")
     }
 
     pub fn cleanup_expired(&self) {
@@ -82,3 +82,4 @@ impl OtpManager {
             .collect()
     }
 }
+//https://mailtrap.io/inboxes/3072952/messages/5157145134

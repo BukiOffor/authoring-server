@@ -452,6 +452,7 @@ pub mod items {
             pub question_type: String,
             pub difficulty: i16,
             pub status: String,
+            pub date : NaiveDateTime,
             pub options: Vec<OptionDto>,
         }
         #[derive(Debug, Serialize, Clone)]

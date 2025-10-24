@@ -24,9 +24,9 @@ pub fn get_routes(state: Arc<AppState>) -> Router {
             "/stats/publish/{subject_id}",
             get(get_item_count_for_publishing),
         )
-        .route("/publish/otp/send/{subject_id}", post(send_otp))
+        .route("/publish/otp/send/{subject_id}", get(send_otp))
         .route(
-            "/publish/subject_id/{subject_id}/task/{task_id}",
+            "/publish/{subject_id}",
             post(publish_items),
         )
         .route(
@@ -48,12 +48,11 @@ pub async fn get_item_count_for_publishing(
 
 pub async fn publish_items(
     State(state): State<Arc<AppState>>,
-    Path((subject_id, task_id)): Path<(String, String)>,
+    Path(subject_id): Path<String>,
     Json(payload): Json<Otp>,
 ) -> Result<Json<MessageDto>, ModuleError> {
     let response = crate::services::subject::publish_items(
         &subject_id,
-        &task_id,
         payload,
         state.pool.clone(),
         &state.otp_manager,
