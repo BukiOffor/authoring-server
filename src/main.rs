@@ -54,9 +54,8 @@ async fn main() {
             "http://192.168.1.177:4300".parse::<HeaderValue>().unwrap(),
             "http://localhost:4200".parse::<HeaderValue>().unwrap(),
             "http://127.0.0.1:1430".parse::<HeaderValue>().unwrap(),
-            "https://02856ee0334e.ngrok-free.app"
-                .parse::<HeaderValue>()
-                .unwrap(),
+            "http://localhost:1430".parse::<HeaderValue>().unwrap(),
+            "tauri://localhost".parse().unwrap(), 
         ]);
     info!("Starting Web Server ............");
     let app = handlers::get_routes(state)
