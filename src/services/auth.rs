@@ -25,7 +25,7 @@ pub async fn authenticate_user(
         .build()
         .map_err(|e| ModuleError::InternalError(e.to_string()))?;
     let user: Option<User> = schema::user::table
-        .filter(schema::user::email.eq(payload.email.clone()))
+        //.filter(schema::user::email.eq(payload.email.clone()))
         .select(User::as_select())
         .first(&mut conn)
         .optional()
@@ -33,6 +33,9 @@ pub async fn authenticate_user(
             ModuleError::InternalError(format!("Error fetching item from table: {}", e))
         })?;
     if let Some(mut user) = user {
+        if payload.email.ne(&user.email) {
+            return Err(ModuleError::WrongCredentials);
+        }
         let is_password = crate::helpers::password_verfier(&payload.password, &user.password_hash);
         if !is_password {
             return Err(ModuleError::WrongCredentials);
