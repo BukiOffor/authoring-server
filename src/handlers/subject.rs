@@ -1,7 +1,7 @@
-use crate::helpers::dto::pagination::{PaginatedResult, Pagination};
 use crate::helpers::dto::MessageDto;
 use crate::helpers::dto::auth::Otp;
 use crate::helpers::dto::items::ItemTotalStats;
+use crate::helpers::dto::pagination::{PaginatedResult, Pagination};
 use crate::helpers::dto::subject::{ItemReadyStats, SubjectDashboardDto, SubjectDto};
 use crate::helpers::jwt::Claims;
 use crate::{AppState, error::ModuleError};
@@ -25,10 +25,7 @@ pub fn get_routes(state: Arc<AppState>) -> Router {
             get(get_item_count_for_publishing),
         )
         .route("/publish/otp/send/{subject_id}", get(send_otp))
-        .route(
-            "/publish/{subject_id}",
-            post(publish_items),
-        )
+        .route("/publish/{subject_id}", post(publish_items))
         .route(
             "/total/stats/subject_id/{subject_id}",
             get(get_item_stats_for_subject),
@@ -82,10 +79,13 @@ pub async fn send_otp(
 pub async fn get_item_stats_for_subject(
     State(state): State<Arc<AppState>>,
     Path(subject_id): Path<String>,
-    Query(pagination) : Query<Pagination>
+    Query(pagination): Query<Pagination>,
 ) -> Result<Json<PaginatedResult<ItemTotalStats>>, ModuleError> {
-    let response =
-        crate::services::subject::get_item_stats_for_subject(subject_id, pagination, state.pool.clone())?;
+    let response = crate::services::subject::get_item_stats_for_subject(
+        subject_id,
+        pagination,
+        state.pool.clone(),
+    )?;
     Ok(Json(response))
 }
 

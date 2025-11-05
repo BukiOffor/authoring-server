@@ -1,4 +1,4 @@
-use crate::helpers::dto::MessageDto;
+use crate::error::ErrorMessage;
 use crate::helpers::dto::auth::{JwtPayloadDto, LoginResponse};
 use crate::helpers::dto::tasks::TaskMigrationDto;
 use crate::helpers::password_hasher;
@@ -48,7 +48,6 @@ pub async fn authenticate_user(
             .map(|server| format!("{}/auth", server))
             .map_err(|e| ModuleError::Error(e.to_string()))?;
 
-        //let client = reqwest::Client::new();
         let response = client.post(url).json(&payload).send().await.map_err(|_| {
             ModuleError::InternalError(
                 "Upstream Server is not active yet, please contact Adminstrator".into(),
@@ -91,8 +90,12 @@ pub async fn authenticate_user(
 
             Ok(JwtPayloadDto::new(id))
         } else {
+            let err_message = response.text().await.unwrap_or_default();
+            let server_err: ErrorMessage = serde_json::from_str(&err_message).map_err(|_| {
+                ModuleError::InternalError("Could not deserialize upstream error message".into())
+            })?;
             return Err(ModuleError::Error(
-                "Upstream Server is not active yet, please contact Adminstrator".into(),
+                "Upstream Error | ".to_string() + &server_err.message,
             ));
         }
     }
@@ -112,9 +115,14 @@ pub async fn populate_table(
         .send()
         .await
         .map_err(|e| ModuleError::InternalError(e.to_string()))?;
+
     if !result.status().is_success() {
-        return Err(ModuleError::InternalError(
-            "Something Went Wrong, please contact Adminstartor".into(),
+        let err_message = result.text().await.unwrap_or_default();
+        let server_err: ErrorMessage = serde_json::from_str(&err_message).map_err(|_| {
+            ModuleError::InternalError("Could not deserialize upstream error message".into())
+        })?;
+        return Err(ModuleError::Error(
+            "Upstream Error: ".to_string() + &server_err.message,
         ));
     }
     let body = result
@@ -192,20 +200,13 @@ pub async fn try_login(
             serde_json::from_str(&body).map_err(|e| ModuleError::InternalError(e.to_string()))?;
 
         Ok(auth_response)
-    } else if response.status().is_client_error() {
-        // parse body into server error type
-        let message: MessageDto = serde_json::from_str(&response.text().await.unwrap_or_default())
-            .map_err(|_| {
-                ModuleError::InternalError(
-                    "Could not deserialize error message from upstream server".into(),
-                )
-            })?;
-        return Err(ModuleError::InternalError(
-            format!("Upstream: {}", message.message).into(),
-        ));
     } else {
-        Err(ModuleError::InternalError(
-            "Upstream server is offline".into(),
-        ))
+        let err_message = response.text().await.unwrap_or_default();
+        let server_err: ErrorMessage = serde_json::from_str(&err_message).map_err(|_| {
+            ModuleError::InternalError("Could not deserialize upstream error message".into())
+        })?;
+        return Err(ModuleError::Error(
+            "Upstream Error: ".to_string() + &server_err.message,
+        ));
     }
 }

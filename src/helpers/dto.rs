@@ -250,7 +250,7 @@ pub mod items {
     use crate::{
         helpers::dto::items::display::OptionDto,
         models::{
-            item::{ItemStatus, Items},
+            item::{Fetch, ItemStatus, Items},
             item_options::ItemOptions,
             passages::Passage,
         },
@@ -432,6 +432,14 @@ pub mod items {
         pub options: Vec<OptionDto>,
         pub publish: bool,
     }
+    #[derive(Debug, serde::Deserialize)]
+    pub struct StatusDto {
+        pub status: ItemStatus,
+    }
+    #[derive(Debug, serde::Deserialize)]
+    pub struct FetchDto {
+        pub status: Fetch,
+    }
 
     pub mod display {
         use super::*;
@@ -452,7 +460,7 @@ pub mod items {
             pub question_type: String,
             pub difficulty: i16,
             pub status: String,
-            pub date : NaiveDateTime,
+            pub date: NaiveDateTime,
             pub options: Vec<OptionDto>,
         }
         #[derive(Debug, Serialize, Clone)]
@@ -621,5 +629,4 @@ pub mod pagination {
             Self { items, metadata }
         }
     }
-
 }

@@ -61,6 +61,24 @@ pub enum ItemStatus {
     Submitted,
     Ready,
 }
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub enum Fetch {
+    Draft,
+    Submitted,
+    Ready,
+    All,
+}
+
+impl ItemStatus {
+    pub fn from_fetch(value: Fetch) -> Option<Self> {
+        match value {
+            Fetch::Draft => Some(Self::Draft),
+            Fetch::Submitted => Some(Self::Submitted),
+            Fetch::Ready => Some(Self::Ready),
+            Fetch::All => None,
+        }
+    }
+}
 
 impl<DB> FromSql<Text, DB> for ItemStatus
 where

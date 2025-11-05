@@ -1,5 +1,7 @@
+use crate::helpers::dto::items::{FetchDto};
 use crate::helpers::dto::topic::{SubTopicWithMetadata, TopicMetaData};
 use crate::{AppState, error::ModuleError, helpers::dto::topic::TopicNode};
+use axum::extract::Query;
 use axum::{Json, extract::State};
 use axum::{Router, extract::Path, routing::get};
 use std::sync::Arc;
@@ -67,10 +69,13 @@ pub async fn fetch_subtopics_item_count(
 pub async fn fetch_subtopics_under_topic_with_metadata(
     State(state): State<Arc<AppState>>,
     Path((subject_id, topic_id)): Path<(String, String)>,
+    Query(query): Query<FetchDto>,
 ) -> Result<Json<Vec<SubTopicWithMetadata>>, ModuleError> {
+    let status = crate::models::item::ItemStatus::from_fetch(query.status);
     let response = crate::services::topics::fetch_subtopics_under_topic_with_metadata(
         &subject_id,
         &topic_id,
+        status,
         state.pool.clone(),
     )?;
     Ok(Json(response))

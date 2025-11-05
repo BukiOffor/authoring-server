@@ -1,0 +1,7 @@
+{
+    "upstream_server": "https://bearable-noncathartical-evelin.ngrok-free.dev",
+    "database_url": "/Users/buki/.sib/app.sqlite3",
+    "url": ".sib/app.sqlite3",
+    "jwt_secret": "0x78e48c11a9d2b334a990"
+
+}

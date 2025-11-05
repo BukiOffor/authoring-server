@@ -1,5 +1,6 @@
 use crate::helpers::dto::ItemCreatedResponse;
 use crate::models::item::ItemStatus;
+use crate::models::tasks::Tasks;
 use crate::{
     DbPool,
     error::ModuleError,
@@ -27,23 +28,44 @@ pub fn create_item(
         .get()
         .map_err(|e| ModuleError::InternalError(e.to_string()))?;
 
-    if options.len() != 4 {
-        return Err(ModuleError::Error(
-            "Number of options must be 4".to_string(),
-        ));
-    }
-    let mut is_answer_found = false;
-    for option in options.iter() {
-        if option.is_answer {
-            is_answer_found = true;
-            break;
+    if item.status.eq(&ItemStatus::Ready) {
+        let expected_items: Tasks = crate::schema::tasks::table
+            .filter(crate::schema::tasks::subject_id.eq(item.subject_id.clone()))
+            .filter(crate::schema::tasks::task_id.eq(item.task_id.clone()))
+            .filter(crate::schema::tasks::topic_id.eq(item.topic_id.clone()))
+            .get_result(&mut conn)?;
+
+        let number_of_items_in_ready_or_submitted = items::table
+            .filter(items::topic_id.eq(item.topic_id.clone()))
+            .filter(items::task_id.eq(item.task_id.clone()))
+            .filter(items::status.eq_any(vec![ItemStatus::Ready, ItemStatus::Submitted]))
+            .count()
+            .get_result::<i64>(&mut conn)?;
+
+        if number_of_items_in_ready_or_submitted >= expected_items.num_of_questions.into() {
+            return Err(ModuleError::Error(
+                "You have created the required number of questions in this topic".into(),
+            ));
+        }
+        if options.len() != 4 {
+            return Err(ModuleError::Error(
+                "Number of options must be 4".to_string(),
+            ));
+        }
+        let mut is_answer_found = false;
+        for option in options.iter() {
+            if option.is_answer {
+                is_answer_found = true;
+                break;
+            }
+        }
+        if !is_answer_found {
+            return Err(ModuleError::Error(
+                "Option is answer must be true".to_string(),
+            ));
         }
     }
-    if !is_answer_found {
-        return Err(ModuleError::Error(
-            "Option is answer must be true".to_string(),
-        ));
-    }
+
     conn.transaction::<_, ModuleError, _>(|conn| {
         insert!(items::table, item, conn);
         insert!(item_options::table, options, conn);
@@ -70,6 +92,30 @@ pub fn update_item_status(
     let mut conn = pool
         .get()
         .map_err(|e| ModuleError::InternalError(e.to_string()))?;
+
+    let item: Items = items::table
+        .filter(items::id.eq(item_id.clone()))
+        .select(Items::as_select())
+        .get_result(&mut conn)?;
+
+    let expected_items: Tasks = crate::schema::tasks::table
+        .filter(crate::schema::tasks::subject_id.eq(item.subject_id.clone()))
+        .filter(crate::schema::tasks::task_id.eq(item.task_id.clone()))
+        .filter(crate::schema::tasks::topic_id.eq(item.topic_id.clone()))
+        .get_result(&mut conn)?;
+
+    let number_of_items_in_ready_or_submitted = items::table
+        .filter(items::topic_id.eq(item.topic_id.clone()))
+        .filter(items::task_id.eq(item.task_id.clone()))
+        .filter(items::status.eq_any(vec![ItemStatus::Ready, ItemStatus::Submitted]))
+        .count()
+        .get_result::<i64>(&mut conn)?;
+
+    if number_of_items_in_ready_or_submitted >= expected_items.num_of_questions.into() {
+        return Err(ModuleError::Error(
+            "You have created the required number of questions in this topic".into(),
+        ));
+    }
     diesel::update(items::table.filter(items::id.eq(item_id.clone())))
         .set((
             items::status.eq(status),

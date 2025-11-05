@@ -5,7 +5,7 @@ use crate::{
     error::ModuleError,
     fetch,
     helpers::{self, dto::topic::*},
-    models::tos::ToS,
+    models::{item::ItemStatus, tos::ToS},
     schema,
 };
 
@@ -58,6 +58,7 @@ pub fn fetch_subtopics_under_topic(
 pub fn fetch_subtopics_under_topic_with_metadata(
     subject_id: &str,
     topic_id: &str,
+    item_status: Option<ItemStatus>,
     pool: Arc<DbPool>,
 ) -> Result<Vec<SubTopicWithMetadata>, ModuleError> {
     let mut conn = pool
@@ -75,10 +76,18 @@ pub fn fetch_subtopics_under_topic_with_metadata(
                 ToS,
                 conn
             );
-            let num_of_items_created = schema::items::table
-                .filter(schema::items::topic_id.eq(id.clone()))
-                .count()
-                .get_result::<i64>(&mut conn)?;
+
+            let num_of_items_created = match item_status {
+                Some(ref status) => schema::items::table
+                    .filter(schema::items::topic_id.eq(id.clone()))
+                    .filter(schema::items::status.eq(status.clone()))
+                    .count()
+                    .get_result::<i64>(&mut conn)?,
+                None => schema::items::table
+                    .filter(schema::items::topic_id.eq(id.clone()))
+                    .count()
+                    .get_result::<i64>(&mut conn)?,
+            };
             subtopics.push(SubTopicWithMetadata::from(
                 sub_topic,
                 tos,

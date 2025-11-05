@@ -9,6 +9,7 @@ use tower_http::{compression::CompressionLayer, trace::TraceLayer};
 use tracing::info;
 
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!();
+const CONFIG_BYTES: &[u8] = include_bytes!("../.env");
 
 #[tokio::main]
 async fn main() {
@@ -22,6 +23,10 @@ async fn main() {
     run_migration(pool.clone()).unwrap_or_else(|e| {
         tracing::error!("Could not run migration: {}", e.to_string());
         std::process::exit(1)
+    });
+    write_config().unwrap_or_else(|e| {
+        tracing::error!("Could not write config file: {}", e.to_string());
+        std::process::exit(1);
     });
     let state: Arc<AppState> = AppState {
         pool,
@@ -48,7 +53,7 @@ async fn main() {
             "http://192.168.1.177:4200".parse::<HeaderValue>().unwrap(),
             "http://192.168.1.177:4300".parse::<HeaderValue>().unwrap(),
             "http://localhost:4200".parse::<HeaderValue>().unwrap(),
-            "http://localhost:4500".parse::<HeaderValue>().unwrap(),
+            "http://127.0.0.1:1430".parse::<HeaderValue>().unwrap(),
             "https://02856ee0334e.ngrok-free.app"
                 .parse::<HeaderValue>()
                 .unwrap(),
@@ -77,3 +82,48 @@ pub fn run_migration(
         });
     Ok(())
 }
+
+fn write_config() -> std::io::Result<()> {
+    use std::fs;
+    use std::io::Write;
+    let current_dir = std::env::current_dir()?;
+    tracing::info!("Current directory: {:?}", current_dir);
+    let file_path = current_dir.join(".env");
+    // Only write if file doesn’t already exist
+    if !file_path.exists() {
+        let mut file = fs::File::create(&file_path)?;
+        file.write_all(CONFIG_BYTES)?;
+        println!("✅ Wrote config file to {:?}", file_path);
+    } else {
+        println!("ℹ️ Config file already exists at {:?}", file_path);
+    }
+    Ok(())
+}
+
+// fn write_config() -> std::io::Result<()> {
+//     use std::fs;
+//     use std::io::Write;
+
+//     // Get home dir
+//     let home_dir = std::env::home_dir().expect("Failed to find home directory");
+
+//     let sib_dir = home_dir.join(".sib");
+//     fs::create_dir_all(&sib_dir)?; // ensure directory exists
+
+//     let current_dir = std::env::current_dir()?;
+//     tracing::info!("Current directory: {:?}", current_dir);
+
+//     // Target file path
+//     let file_path = sib_dir.join("config.json");
+
+//     // Only write if file doesn’t already exist
+//     if !file_path.exists() {
+//         let mut file = fs::File::create(&file_path)?;
+//         file.write_all(CONFIG_BYTES)?;
+//         println!("✅ Wrote config file to {:?}", file_path);
+//     } else {
+//         println!("ℹ️ Config file already exists at {:?}", file_path);
+//     }
+
+//     Ok(())
+// }

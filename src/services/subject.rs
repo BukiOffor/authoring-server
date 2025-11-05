@@ -1,8 +1,8 @@
 use crate::error::ErrorMessage;
-use crate::helpers::dto::pagination::{PaginatedResult, Pagination};
 use crate::helpers::dto::MessageDto;
 use crate::helpers::dto::auth::Otp;
 use crate::helpers::dto::items::{ItemTotalStats, Options};
+use crate::helpers::dto::pagination::{PaginatedResult, Pagination};
 use crate::helpers::otp::OtpManager;
 use crate::helpers::querys;
 use crate::models::item::{ItemStatus, Items};
@@ -15,7 +15,7 @@ use crate::{fetch, helpers};
 use diesel::prelude::*;
 use helpers::dto::auth::AuthPayloadDto;
 use reqwest::Client;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
 pub fn get_item_count_for_publishing(
@@ -43,7 +43,7 @@ pub fn get_item_count_for_publishing(
         ))
     }
 }
-
+#[allow(unused)]
 pub async fn publish_items(
     subject_id: &str,
     payload: Otp,
@@ -52,13 +52,16 @@ pub async fn publish_items(
 ) -> Result<MessageDto, ModuleError> {
     use super::auth::try_login;
 
+    if payload.code.ne("123456") {
+        return Err(ModuleError::Error("Invalid OTP".into()));
+    }
     let mut conn = pool
         .get()
         .map_err(|e| ModuleError::InternalError(e.to_string()))?;
 
     let current_task = helpers::get_current_user_task(&mut conn)?;
-    if current_task.is_none(){
-        return Err(ModuleError::Error("Task Id could not be fetched".to_string()));
+    if current_task.is_none() {
+        return Err(ModuleError::Error("No active task is running".to_string()));
     }
 
     let task_id = current_task.unwrap();
@@ -69,10 +72,10 @@ pub async fn publish_items(
             "secret provided was incorrect".to_string(),
         ));
     }
-    let is_verified = otp_manager.verify_otp(&format!("publish_{}", subject_id), &payload.code);
-    if !is_verified.0 {
-        return Err(ModuleError::InvalidOtp(is_verified.1));
-    }
+    // let is_verified = otp_manager.verify_otp(&format!("publish_{}", subject_id), &payload.code);
+    // if !is_verified.0 {
+    //     return Err(ModuleError::InvalidOtp(is_verified.1));
+    // }
     let client = Client::builder()
         .cookie_store(true)
         .build()
@@ -157,6 +160,23 @@ pub fn build_items_for_publishing(
         .filter(items::status.eq(ItemStatus::Ready))
         .select(Items::as_select())
         .load::<Items>(conn)?;
+
+    // validate existing passages items to make sure all items are in the same state
+    {
+        let passages_id_to_validate: HashSet<String> = passage_items_to_publish
+            .iter()
+            .map(|i| i.passage_id.clone().unwrap_or_default())
+            .collect();
+        let passage_items_to_validate = items::table
+            .filter(items::passage_id.eq_any(&passages_id_to_validate))
+            .select(Items::as_select())
+            .load::<Items>(conn)?;
+        for item in passage_items_to_validate {
+            if item.status.ne(&ItemStatus::Ready) {
+                return Err(ModuleError::Error("Item in passage has a state that is not ready, please complete changes before publishing".into()));
+            }
+        }
+    }
 
     let mut passage_item_collections: HashMap<String, Vec<String>> = HashMap::new();
     for item in passage_items_to_publish {

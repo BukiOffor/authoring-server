@@ -1,0 +1,1 @@
+function a(i){let n=String.fromCharCode(97+i),r=["i","ii","iii","iv","v","vi","vii","viii","ix","x","xi","xii","xiii","xiv","xv","xvi","xvii","xviii","xix","xx"][i]||"n/a";return{alpha:n,numeral:r}}export{a};
