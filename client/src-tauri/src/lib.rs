@@ -97,7 +97,6 @@ pub fn run() {
 }
 
 
-
 pub fn prompt_user_and_kill(
     app: tauri::AppHandle,
     child_process: Arc<Mutex<Option<CommandChild>>>,

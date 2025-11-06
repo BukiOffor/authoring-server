@@ -1,4 +1,4 @@
-use crate::helpers::dto::items::{FetchDto};
+use crate::helpers::dto::items::FetchDto;
 use crate::helpers::dto::topic::{SubTopicWithMetadata, TopicMetaData};
 use crate::{AppState, error::ModuleError, helpers::dto::topic::TopicNode};
 use axum::extract::Query;

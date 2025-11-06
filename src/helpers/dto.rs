@@ -569,6 +569,13 @@ pub mod subject {
 pub mod user {
     use super::*;
 
+    #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+    pub struct ResetPasswordDto {
+        pub user_id: String,
+        pub old_password: String,
+        pub new_password: String,
+    }
+
     #[derive(Debug, Clone, Serialize, Deserialize)]
     pub struct UpdateUserDto {
         pub title: String,
