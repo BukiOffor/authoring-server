@@ -21,7 +21,7 @@ use crate::{
 };
 
 static KEYS: LazyLock<Keys> = LazyLock::new(|| {
-    let secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
+    let secret = "This is a Great Secret";
     Keys::new(secret.as_bytes())
 });
 

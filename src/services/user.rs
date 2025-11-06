@@ -1,9 +1,9 @@
-use std::{env, sync::Arc};
+use std::{sync::Arc};
 
 use crate::{
     DbPool, error::{ErrorMessage, ModuleError}, helpers::{
         self,
-        dto::{MessageDto, user::{ResetPasswordDto, UpdateUserDto}},
+        dto::{MessageDto, auth::AuthPayloadDto, user::{ResetPasswordDto, UpdateUserDto}}, read_config,
     }, models::user::UserDto
 };
 use diesel::*;
@@ -23,8 +23,8 @@ pub fn update_user(
             "Expected full name to be more than 1 word".to_string(),
         ));
     }
-    let last_name = names[0].to_string();
-    let first_name = names[1..].join(" ");
+    //let last_name = names[0].to_string();
+    //let first_name = names[1..].join(" ");
     diesel::update(crate::schema::user::table.filter(crate::schema::user::id.eq(user_id)))
         .set((
             //crate::schema::user::first_name.eq(first_name),
@@ -69,14 +69,18 @@ pub async fn set_secret_password(
         .build()
         .map_err(|e| ModuleError::InternalError(e.to_string()))?;
 
-    let url = env::var("UPSTREAM_SERVER")
-        .map(|server| format!("{}/auth", server))
-        .map_err(|e| ModuleError::Error(e.to_string()))?;
+    // let url = env::var("UPSTREAM_SERVER")
+    //     .map(|server| format!("{}/auth", server))
+    //     .map_err(|e| ModuleError::Error(e.to_string()))?;
 
-    let json = serde_json::json!({
-        "email": user.email,
-        "password": password
-    });
+    let upstream = read_config()?.upstream_server;
+    let url = format!("{}/auth", upstream);
+    
+
+    let json = AuthPayloadDto{
+        email: user.email,
+        password
+    };
     let result = client
         .post(url)
         .json(&json)
@@ -94,9 +98,13 @@ pub async fn set_secret_password(
         ));
     }
 
-    let set_secret_url = env::var("UPSTREAM_SERVER")
-        .map(|server| format!("{}/users/secret/set", server))
-        .map_err(|e| ModuleError::Error(e.to_string()))?;
+    // let set_secret_url = env::var("UPSTREAM_SERVER")
+    //     .map(|server| format!("{}/users/secret/set", server))
+    //     .map_err(|e| ModuleError::Error(e.to_string()))?;
+
+    let upstream = read_config()?.upstream_server;
+    let set_secret_url = format!("{}/users/secret/set", upstream);
+
     let secret_payload = serde_json::json!({
         "secret": secret
     });
@@ -147,9 +155,12 @@ pub async fn reset_password(payload: ResetPasswordDto, pool: Arc<DbPool>) -> Res
         .cookie_store(true)
         .build()
         .map_err(|e| ModuleError::InternalError(e.to_string()))?;
-    let url = env::var("UPSTREAM_SERVER")
-        .map(|server| format!("{}/users/password/reset", server))
-        .map_err(|e| ModuleError::Error(e.to_string()))?;
+    // let url = env::var("UPSTREAM_SERVER")
+    //     .map(|server| format!("{}/users/password/reset", server))
+    //     .map_err(|e| ModuleError::Error(e.to_string()))?;
+
+    let upstream = read_config()?.upstream_server;
+    let url = format!("{}/users/password/reset", upstream);
 
     let result = client
         .post(url)

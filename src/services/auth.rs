@@ -1,7 +1,7 @@
 use crate::error::ErrorMessage;
 use crate::helpers::dto::auth::{JwtPayloadDto, LoginResponse};
 use crate::helpers::dto::tasks::TaskMigrationDto;
-use crate::helpers::password_hasher;
+use crate::helpers::{password_hasher, read_config};
 use crate::models::tasks::Tasks;
 use crate::models::topic::Topic;
 use crate::models::user::UserDto;
@@ -10,7 +10,6 @@ use crate::{DbPool, error::ModuleError, helpers::dto::auth::AuthPayloadDto, mode
 use diesel::Connection;
 use diesel::{ExpressionMethods, OptionalExtension, QueryDsl, RunQueryDsl, SelectableHelper};
 use reqwest::Client;
-use std::env;
 use std::sync::Arc;
 
 pub async fn authenticate_user(
@@ -47,10 +46,9 @@ pub async fn authenticate_user(
         }
         return Ok(JwtPayloadDto::new(user.id));
     } else {
-        let url = env::var("UPSTREAM_SERVER")
-            .map(|server| format!("{}/auth", server))
-            .map_err(|e| ModuleError::Error(e.to_string()))?;
-
+        let upstream = read_config()?.upstream_server;
+        let url = format!("{}/auth", upstream);
+           
         let response = client.post(url).json(&payload).send().await.map_err(|_| {
             ModuleError::InternalError(
                 "Upstream Server is not active yet, please contact Adminstrator".into(),
@@ -65,13 +63,15 @@ pub async fn authenticate_user(
             let auth_response: LoginResponse = serde_json::from_str(&body)
                 .map_err(|e| ModuleError::InternalError(e.to_string()))?;
 
-            let url = env::var("UPSTREAM_SERVER")
-                .map(|server| format!("{}/users/fetch/{}", server, auth_response.id))
-                .map_err(|e| ModuleError::Error(e.to_string()))?;
+            let upstream = read_config()?.upstream_server;
+            let url = format!("{}/users/fetch/{}", upstream, auth_response.id);
+
+            // let url = env::var("UPSTREAM_SERVER")
+            //     .map(|server| format!("{}/users/fetch/{}", server, auth_response.id))
+            //     .map_err(|e| ModuleError::Error(e.to_string()))?;
 
             let result = client
                 .get(url)
-                //.bearer_auth(auth_response.access_token.clone())
                 .send()
                 .await
                 .map_err(|e| ModuleError::InternalError(e.to_string()))?;
@@ -109,9 +109,13 @@ pub async fn populate_table(
     conn: &mut DbConn,
     client: &Client,
 ) -> Result<(), ModuleError> {
-    let url = env::var("UPSTREAM_SERVER")
-        .map(|server| format!("{}/tasks/migration/author", server))
-        .map_err(|e| ModuleError::Error(e.to_string()))?;
+    
+    let upstream = read_config()?.upstream_server;
+    let url = format!("{}/tasks/migration/author", upstream);
+
+    // let url = env::var("UPSTREAM_SERVER")
+    //     .map(|server| format!("{}/tasks/migration/author", server))
+    //     .map_err(|e| ModuleError::Error(e.to_string()))?;
 
     let result = client
         .get(url)
@@ -183,9 +187,14 @@ pub async fn try_login(
     payload: AuthPayloadDto,
     client: &Client,
 ) -> Result<LoginResponse, ModuleError> {
-    let url = env::var("UPSTREAM_SERVER")
-        .map(|server| format!("{}/auth", server))
-        .map_err(|e| ModuleError::Error(e.to_string()))?;
+
+       
+    let upstream = read_config()?.upstream_server;
+    let url = format!("{}/auth", upstream);
+
+    // let url = env::var("UPSTREAM_SERVER")
+    //     .map(|server| format!("{}/auth", server))
+    //     .map_err(|e| ModuleError::Error(e.to_string()))?;
 
     let response = client
         .post(url)

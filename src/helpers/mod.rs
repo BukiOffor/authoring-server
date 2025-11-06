@@ -3,7 +3,7 @@ pub mod jwt;
 pub mod otp;
 pub mod querys;
 
-use crate::{DbConn, error::ModuleError, schema};
+use crate::{Config, DbConn, create_app_data_dir, error::ModuleError, schema};
 use argon2::{
     Argon2,
     password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString, rand_core::OsRng},
@@ -40,4 +40,12 @@ pub fn get_current_user_task(conn: &mut DbConn) -> Result<Option<String>, Module
         .optional()
         .map_err(ModuleError::from)?;
     Ok(tasks)
+}
+
+
+pub fn read_config() -> Result<Config, ModuleError> {
+    let file_path = create_app_data_dir("sib").map_err(|_| ModuleError::InternalError("Could not get App file data".into()))?.join("config.json");
+    let contents = std::fs::read_to_string(&file_path).map_err(|e| ModuleError::InternalError(format!("could not read file: {}", e).into()))?;
+    let config: Config = serde_json::from_str(&contents).map_err(|e| ModuleError::InternalError(format!("could not parse json: {}", e).into()))?;
+    Ok(config)
 }

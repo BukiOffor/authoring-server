@@ -1,5 +1,4 @@
 use std::sync::Arc;
-
 use authoring_server::helpers::otp::OtpManager;
 use authoring_server::{AppState, config, handlers};
 use diesel_migrations::{EmbeddedMigrations, MigrationHarness, embed_migrations};
@@ -9,7 +8,7 @@ use tower_http::{compression::CompressionLayer, trace::TraceLayer};
 use tracing::info;
 
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!();
-const CONFIG_BYTES: &[u8] = include_bytes!("../.env");
+const CONFIG_BYTES: &[u8] = include_bytes!("../config.json");
 
 #[tokio::main]
 async fn main() {
@@ -83,12 +82,12 @@ pub fn run_migration(
     Ok(())
 }
 
+
 fn write_config() -> std::io::Result<()> {
     use std::fs;
     use std::io::Write;
-    let current_dir = std::env::current_dir()?;
-    tracing::info!("Current directory: {:?}", current_dir);
-    let file_path = current_dir.join(".env");
+    let app_path = authoring_server::create_app_data_dir("sib").expect("Failed to create app data directory");
+    let file_path = app_path.join("config.json");
     // Only write if file doesn’t already exist
     if !file_path.exists() {
         let mut file = fs::File::create(&file_path)?;
@@ -99,6 +98,24 @@ fn write_config() -> std::io::Result<()> {
     }
     Ok(())
 }
+
+
+// fn write_config() -> std::io::Result<()> {
+//     use std::fs;
+//     use std::io::Write;
+//     let current_dir = std::env::current_dir()?;
+//     tracing::info!("Current directory: {:?}", current_dir);
+//     let file_path = current_dir.join(".env");
+//     // Only write if file doesn’t already exist
+//     if !file_path.exists() {
+//         let mut file = fs::File::create(&file_path)?;
+//         file.write_all(CONFIG_BYTES)?;
+//         println!("✅ Wrote config file to {:?}", file_path);
+//     } else {
+//         println!("ℹ️ Config file already exists at {:?}", file_path);
+//     }
+//     Ok(())
+// }
 
 // fn write_config() -> std::io::Result<()> {
 //     use std::fs;

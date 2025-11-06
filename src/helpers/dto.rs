@@ -502,6 +502,8 @@ pub mod subject {
 
     #[derive(Debug, Clone, Serialize, Deserialize)]
     pub struct ItemTransferDto {
+        pub user: String,
+        pub secret: String,
         pub passage: Vec<PassageDto>,
         pub items: Vec<AcceptItemDto>,
     }

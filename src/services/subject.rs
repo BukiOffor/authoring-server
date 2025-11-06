@@ -4,7 +4,7 @@ use crate::helpers::dto::auth::Otp;
 use crate::helpers::dto::items::{ItemTotalStats, Options};
 use crate::helpers::dto::pagination::{PaginatedResult, Pagination};
 use crate::helpers::otp::OtpManager;
-use crate::helpers::querys;
+use crate::helpers::{querys, read_config};
 use crate::models::item::{ItemStatus, Items};
 use crate::models::item_options::ItemOptions;
 use crate::models::passages::Passage;
@@ -13,7 +13,6 @@ use crate::schema::user;
 use crate::{DbConn, DbPool, error::ModuleError, helpers::dto::subject::*, schema::*};
 use crate::{fetch, helpers};
 use diesel::prelude::*;
-use helpers::dto::auth::AuthPayloadDto;
 use reqwest::Client;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
@@ -67,9 +66,15 @@ pub async fn publish_items(
     let task_id = current_task.unwrap();
     let user: User = fetch!(user::table, user::id, payload.user_id.clone(), User, conn);
 
-    if !helpers::password_verfier(&payload.secret, &user.password_hash) {
+    if let Some(secret) = user.secret {
+        if !helpers::password_verfier(&payload.secret, &secret) {
+            return Err(ModuleError::Error(
+                "secret provided was incorrect".to_string(),
+            ));
+        }
+    } else {
         return Err(ModuleError::Error(
-            "secret provided was incorrect".to_string(),
+            "User has not set secret password".to_string(),
         ));
     }
     // let is_verified = otp_manager.verify_otp(&format!("publish_{}", subject_id), &payload.code);
@@ -81,17 +86,20 @@ pub async fn publish_items(
         .build()
         .map_err(|e| ModuleError::InternalError(e.to_string()))?;
 
-    let auth_payload = AuthPayloadDto::new(user.email, payload.secret);
+    // let auth_payload = AuthPayloadDto::new(user.email, payload.secret.clone());
 
-    if let Err(e) = try_login(auth_payload, &client).await {
-        return Err(e);
-    }
+    // if let Err(e) = try_login(auth_payload, &client).await {
+    //     return Err(e);
+    // }
 
-    let url = std::env::var("UPSTREAM_SERVER")
-        .map(|server| format!("{}/author/accept", server))
-        .map_err(|e| ModuleError::Error(e.to_string()))?;
+    // let url = std::env::var("UPSTREAM_SERVER")
+    //     .map(|server| format!("{}/author/accept", server))
+    //     .map_err(|e| ModuleError::Error(e.to_string()))?;
+    
+    let upstream = read_config()?.upstream_server;
+    let url = format!("{}/author/accept", upstream);
 
-    let items_to_send = build_items_for_publishing(subject_id, &task_id, &mut conn)?;
+    let items_to_send = build_items_for_publishing(subject_id, &task_id, user.id, payload.secret, &mut conn)?;
 
     let server_response = client
         .post(url)
@@ -103,6 +111,7 @@ pub async fn publish_items(
     tracing::info!("Upload items status: {}", server_response.status());
     if !server_response.status().is_success() {
         let body = server_response.text().await.unwrap_or_default();
+        tracing::info!("{}", body);
         let message: ErrorMessage = serde_json::from_str(&body).unwrap_or_default();
         return Err(ModuleError::InternalError(message.message));
     }
@@ -127,9 +136,13 @@ pub async fn publish_items(
 pub fn build_items_for_publishing(
     subject_id: &str,
     task_id: &str,
+    user: String,
+    secret: String,
     conn: &mut DbConn,
 ) -> Result<ItemTransferDto, ModuleError> {
     let mut response = ItemTransferDto {
+        user,
+        secret,
         passage: Vec::new(),
         items: Vec::new(),
     };

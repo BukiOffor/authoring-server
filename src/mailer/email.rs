@@ -5,7 +5,7 @@ use lettre::{
 };
 use serde_json::Value;
 
-use super::config::Config;
+use super::config::EmailConfig as Config;
 
 /// An Email struct that represents a receiver, a sender and email configuration.
 pub struct Email {

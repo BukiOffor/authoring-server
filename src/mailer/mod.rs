@@ -1,7 +1,7 @@
 use crate::{
     error::ModuleError,
     mailer::{
-        config::Config,
+        config::EmailConfig as Config,
         email::{Email, Receiptent},
     },
 };

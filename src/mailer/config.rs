@@ -1,7 +1,7 @@
 use crate::error::ModuleError;
 
 #[derive(Debug, Clone)]
-pub struct Config {
+pub struct EmailConfig {
     pub smtp_host: String,
     pub smtp_port: u16,
     pub smtp_user: String,
@@ -10,8 +10,8 @@ pub struct Config {
     pub smtp_to: String,
 }
 
-impl Config {
-    pub fn init() -> Result<Config, ModuleError> {
+impl EmailConfig {
+    pub fn init() -> Result<EmailConfig, ModuleError> {
         let smtp_host =
             std::env::var("SMTP_HOST").map_err(|e| ModuleError::InternalError(e.to_string()))?;
         let smtp_port = std::env::var("SMTP_PORT").unwrap_or("2525".into());
@@ -24,7 +24,7 @@ impl Config {
         let smtp_to =
             std::env::var("SMTP_TO").map_err(|e| ModuleError::InternalError(e.to_string()))?;
 
-        Ok(Config {
+        Ok(Self {
             smtp_host,
             smtp_pass,
             smtp_user,
